@@ -63,8 +63,14 @@ def process_complete(data, command, rc, stdout, stderr):
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
+    title_fg=weechat.color(weechat.config_color(weechat.config_get("weechat.bar.title.color_fg")))
+    title_bg=weechat.color(weechat.config_color(weechat.config_get("weechat.bar.title.color_bg")))
+    red=weechat.color('red')
+    blue=weechat.color('blue')
+    green=weechat.color('green')
+    ptime=time.strftime("%H:%M:%S")
     if not jsonDict['stream']:
-        weechat.buffer_set(data, "title", "STREAM: OFFLINE")
+        weechat.buffer_set(data, "title", "STREAM: %sOFFLINE%s %sCHECKED AT: %s" % (red, title_fg, blue, ptime))
     else:
         createtime = jsonDict['stream']['created_at']
         viewers = jsonDict['stream']['viewers']
@@ -75,8 +81,8 @@ def process_complete(data, command, rc, stdout, stderr):
         dur = currenttime - starttime
         uptime = days_hours_minutes(dur)
 
-        weechat.buffer_set(data, "title", "STREAM: LIVE with %s viewers started %s ago [%s followers]" % (
-            viewers, uptime, followers))
+        weechat.buffer_set(data, "title", "STREAM: %sLIVE%s with %s viewers started %s ago [%s followers] %sCHECKED AT: %s" % (
+            green, title_fg, viewers, uptime, followers, blue, ptime))
     return weechat.WEECHAT_RC_OK
 
 
