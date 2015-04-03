@@ -21,9 +21,11 @@
 
 import weechat
 import json
-import datetime
+from calendar import timegm
+from datetime import datetime, timedelta
 import time
 import string
+
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
@@ -97,7 +99,7 @@ def process_complete(data, command, rc, stdout, stderr):
     if not jsonDict['stream']:
         weechat.buffer_set(data, "title", "STREAM: %sOFFLINE%s %sCHECKED AT: %s" % (red, title_fg, blue, ptime))
     else:
-        currenttime = datetime.datetime.utcnow()
+        currenttime = time.time()
         output='STREAM: %sLIVE%s' % (green, title_fg)
         if 'game' in jsonDict['stream']:
             game = gameshort(jsonDict['stream']['game'])
@@ -106,10 +108,9 @@ def process_complete(data, command, rc, stdout, stderr):
             viewers = jsonDict['stream']['viewers']
             output += ' %s viewers started' % viewers
         if 'created_at' in jsonDict['stream']:
-            createtime = jsonDict['stream']['created_at']
-            starttime = datetime.datetime.fromtimestamp(
-                time.mktime(time.strptime(createtime + " GMT", "%Y-%m-%dT%H:%M:%SZ %Z")))
-            dur = currenttime - starttime
+            createtime = jsonDict['stream']['created_at'].replace('Z', 'GMT')
+            starttime = timegm(time.strptime(createtime,'%Y-%m-%dT%H:%M:%S%Z'))
+            dur=timedelta(seconds=currenttime-starttime)
             uptime = days_hours_minutes(dur)
             output += ' %s ago' % uptime
         if 'channel' in jsonDict['stream']:
@@ -123,11 +124,11 @@ def process_complete(data, command, rc, stdout, stderr):
                     weechat.buffer_set(data, 'localvar_set_tstatus', title)
                     weechat.prnt(data, '%s--%s Title is "%s"' % (pcolor, ccolor, title))
             if 'updated_at' in jsonDict['stream']['channel']:
-                updateat = jsonDict['stream']['channel']['updated_at'] 
-                updatetime = datetime.datetime.fromtimestamp(
-                    time.mktime(time.strptime(updateat + " GMT", "%Y-%m-%dT%H:%M:%SZ %Z")))
-                udur = currenttime - updatetime
+                updateat = jsonDict['stream']['channel']['updated_at'].replace('Z', 'GMT')
+                updatetime = timegm(time.strptime(updateat,'%Y-%m-%dT%H:%M:%S%Z'))
+                udur = timedelta(seconds=currenttime-updatetime)
                 titleage = days_hours_minutes(udur)
+
         output += ' %s' % ptime
         weechat.buffer_set(data, "title", output)
     return weechat.WEECHAT_RC_OK
