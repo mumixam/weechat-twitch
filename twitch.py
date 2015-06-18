@@ -133,6 +133,28 @@ def process_complete(data, command, rc, stdout, stderr):
         weechat.buffer_set(data, "title", output)
     return weechat.WEECHAT_RC_OK
 
+def twitch_clearchat(data, modifier, modifier_data, string):
+    string = string.split(" ")
+    channel = string[2]
+    server = modifier_data
+    user = ""
+    if len(string) == 4:
+        user = string[3].replace(":","")
+    if not channel.startswith("#"):
+        return ""
+    buffer = weechat.buffer_search("irc", "%s.%s" % (server,channel))
+    if buffer:
+        pcolor=weechat.color('chat_prefix_network')
+        ccolor=weechat.color('chat')
+        if user:
+            weechat.prnt(buffer,"%s--%s %s's Chat Cleared By Moderator" % (pcolor,ccolor,user))
+        else:
+            weechat.prnt(buffer,"%s--%s Entire Chat Cleared By Moderator" % (pcolor,ccolor))
+    return ""
+
+def twitch_userstate(data, modifier, modifier_data, string):
+    return ""
+
 
 def twitch_buffer_switch(data, signal, signal_data):
     server = weechat.buffer_get_string(signal_data, 'localvar_server')
@@ -147,3 +169,6 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
                     SCRIPT_DESC, "", ""):
     weechat.hook_command("twitch", SCRIPT_DESC, "", "", "", "twitch_main", "")
     weechat.hook_signal('buffer_switch', 'twitch_buffer_switch', '')
+    weechat.hook_modifier("irc_in_CLEARCHAT", "twitch_clearchat", "")
+    weechat.hook_modifier("irc_in_USERSTATE", "twitch_userstate", "")
+    weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_userstate", "")
