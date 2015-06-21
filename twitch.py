@@ -152,7 +152,7 @@ def twitch_clearchat(data, modifier, modifier_data, string):
             weechat.prnt(buffer,"%s--%s Entire Chat Cleared By Moderator" % (pcolor,ccolor))
     return ""
 
-def twitch_userstate(data, modifier, modifier_data, string):
+def twitch_suppress(data, modifier, modifier_data, string):
     return ""
 
 
@@ -170,5 +170,6 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_command("twitch", SCRIPT_DESC, "", "", "", "twitch_main", "")
     weechat.hook_signal('buffer_switch', 'twitch_buffer_switch', '')
     weechat.hook_modifier("irc_in_CLEARCHAT", "twitch_clearchat", "")
-    weechat.hook_modifier("irc_in_USERSTATE", "twitch_userstate", "")
-    weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_userstate", "")
+    weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
+    weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_suppress", "")
+    weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_suppress", "")
