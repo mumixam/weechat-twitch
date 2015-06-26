@@ -155,6 +155,15 @@ def twitch_clearchat(data, modifier, modifier_data, string):
 def twitch_suppress(data, modifier, modifier_data, string):
     return ""
 
+def twitch_reconnect(data, modifier, modifier_data, string):
+    server = modifier_data
+    buffer = weechat.buffer_search("irc", "server.%s" % server)
+    if buffer:
+        pcolor=weechat.color('chat_prefix_network')
+        ccolor=weechat.color('chat')
+        weechat.prnt(buffer,"%s--%s Server sent reconnect request. Issuing /reconnect" % (pcolor,ccolor))
+        weechat.command(buffer, "/reconnect")
+    return ""
 
 def twitch_buffer_switch(data, signal, signal_data):
     server = weechat.buffer_get_string(signal_data, 'localvar_server')
@@ -170,6 +179,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_command("twitch", SCRIPT_DESC, "", "", "", "twitch_main", "")
     weechat.hook_signal('buffer_switch', 'twitch_buffer_switch', '')
     weechat.hook_modifier("irc_in_CLEARCHAT", "twitch_clearchat", "")
+    weechat.hook_modifier("irc_in_RECONNECT", "twitch_reconnect", "")
     weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_suppress", "")
