@@ -174,6 +174,24 @@ def twitch_buffer_switch(data, signal, signal_data):
     return weechat.WEECHAT_RC_OK
 
 
+def twitch_whisper(data, modifier, modifier_data, string):
+    liststr = string.split()
+    if len(liststr) > 3:
+        if liststr[2] == "WHISPER": liststr[2] = "PRIVMSG"
+        if liststr[1] == "WHISPER": liststr[2] = "PRIVMSG"
+    return ' '.join(liststr)
+
+
+def twitch_privmsg(data, modifier, server_name, string):
+    if not server_name == 'twitchgrp': return string
+    match = re.match(r"^PRIVMSG (.*?) :(.*)",string)
+    if not match:
+        return string
+    if match.group(1).startswith('#'): return string
+    newmsg='PRIVMSG #jtv :.w '+match.group(1)+' '+match.group(2) 
+
+    return newmsg
+
 if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
                     SCRIPT_DESC, "", ""):
     weechat.hook_command("twitch", SCRIPT_DESC, "", "", "", "twitch_main", "")
@@ -183,3 +201,5 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_suppress", "")
+    weechat.hook_modifier("irc_in_WHISPER", "twitch_whisper", "")
+    weechat.hook_modifier("irc_out_PRIVMSG", "twitch_privmsg", "")
