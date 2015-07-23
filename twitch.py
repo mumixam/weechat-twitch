@@ -25,7 +25,7 @@ from calendar import timegm
 from datetime import datetime, timedelta
 import time
 import string
-
+import re
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
@@ -96,8 +96,15 @@ def process_complete(data, command, rc, stdout, stderr):
     blue=weechat.color('blue')
     green=weechat.color('green')
     ptime=time.strftime("%H:%M:%S")
+    subs = weechat.buffer_get_string(data, 'localvar_subs')
+    r9k = weechat.buffer_get_string(data, 'localvar_r9k')
+    slow = weechat.buffer_get_string(data, 'localvar_slow')
     if not jsonDict['stream']:
-        weechat.buffer_set(data, "title", "STREAM: %sOFFLINE%s %sCHECKED AT: %s" % (red, title_fg, blue, ptime))
+        line="STREAM: %sOFFLINE%s %sCHECKED AT: %s" % (red, title_fg, blue, ptime)
+        if subs: line += " %s[SUBS]" % title_fg
+        if r9k: line += " %s[R9K]" % title_fg
+        if slow: line += " %s[SLOW@%s]" % (title_fg,slow)
+        weechat.buffer_set(data, "title", line)
     else:
         currenttime = time.time()
         output='STREAM: %sLIVE%s' % (green, title_fg)
@@ -130,6 +137,9 @@ def process_complete(data, command, rc, stdout, stderr):
                 titleage = days_hours_minutes(udur)
 
         output += ' %s' % ptime
+        if subs: output += " %s[SUBS]" % title_fg
+        if r9k: output += " %s[R9K]" % title_fg
+        if slow: output += " %s[SLOW@%s]" % (title_fg,slow)
         weechat.buffer_set(data, "title", output)
     return weechat.WEECHAT_RC_OK
 
@@ -174,6 +184,28 @@ def twitch_buffer_switch(data, signal, signal_data):
     return weechat.WEECHAT_RC_OK
 
 
+def twitch_roomstate(data, modifier, server, string):
+    message = weechat.info_get_hashtable('irc_message_parse',{"message" : string})
+    buffer = weechat.buffer_search("irc", "%s.%s" % (server,message['channel']))
+    for tag in message['tags'].split(';'):
+        if tag == 'subs-only=0':
+            weechat.buffer_set(buffer, 'localvar_set_subs', '')
+        if tag == 'subs-only=1':
+            weechat.buffer_set(buffer, 'localvar_set_subs', '1')
+        if tag == 'r9k=0':
+            weechat.buffer_set(buffer, 'localvar_set_r9k', '')
+        if tag == 'r9k=1':
+            weechat.buffer_set(buffer, 'localvar_set_r9k', '1')
+        if tag.startswith('slow='):
+            value=tag.split('=')[-1]
+            if value == '0':
+                weechat.buffer_set(buffer, 'localvar_set_slow', '')
+            if value > '0':
+                weechat.buffer_set(buffer, 'localvar_set_slow', value)
+        twitch_main('', buffer, 'bs')
+    return ''
+
+
 def twitch_whisper(data, modifier, modifier_data, string):
     liststr = string.split()
     if len(liststr) > 3:
@@ -188,8 +220,7 @@ def twitch_privmsg(data, modifier, server_name, string):
     if not match:
         return string
     if match.group(1).startswith('#'): return string
-    newmsg='PRIVMSG #jtv :.w '+match.group(1)+' '+match.group(2) 
-
+    newmsg='PRIVMSG jtv :.w '+match.group(1)+' '+match.group(2) 
     return newmsg
 
 if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
@@ -200,6 +231,6 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_modifier("irc_in_RECONNECT", "twitch_reconnect", "")
     weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_suppress", "")
-    weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_suppress", "")
+    weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_roomstate", "")
     weechat.hook_modifier("irc_in_WHISPER", "twitch_whisper", "")
     weechat.hook_modifier("irc_out_PRIVMSG", "twitch_privmsg", "")
