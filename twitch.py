@@ -228,6 +228,8 @@ def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
     if not server_name == 'twitch': return string
     mp = weechat.info_get_hashtable("irc_message_parse", {"message": string})
     if not mp['tags']: return string
+    if '#'+mp['nick'] == mp['channel']:
+        return mp['message_without_tags'].replace(mp['nick'],'~'+mp['nick'],1)
     tags = dict([s.split('=') for s in mp['tags'].split(';')])
     if tags['user-type'] == 'mod':
         prefix += '@'
