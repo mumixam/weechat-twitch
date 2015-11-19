@@ -223,6 +223,23 @@ def twitch_privmsg(data, modifier, server_name, string):
     newmsg='PRIVMSG jtv :.w '+match.group(1)+' '+match.group(2) 
     return newmsg
 
+
+def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
+    if not server_name == 'twitch': return string
+    mp = weechat.info_get_hashtable("irc_message_parse", {"message": string})
+    if not mp['tags']: return string
+    tags = dict([s.split('=') for s in mp['tags'].split(';')])
+    if tags['user-type'] == 'mod':
+        prefix += '@'
+    if tags['subscriber'] == '1':
+        prefix += '%'
+    if prefix:
+        msg=mp['message_without_tags'].replace(mp['nick'],prefix+mp['nick'],1)
+        return '@'+mp['tags']+' '+msg
+    else:
+        return string
+
+
 if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
                     SCRIPT_DESC, "", ""):
     weechat.hook_command("twitch", SCRIPT_DESC, "", "", "", "twitch_main", "")
@@ -234,3 +251,4 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_roomstate", "")
     weechat.hook_modifier("irc_in_WHISPER", "twitch_whisper", "")
     weechat.hook_modifier("irc_out_PRIVMSG", "twitch_privmsg", "")
+    weechat.hook_modifier("irc_in_PRIVMSG", "twitch_in_privmsg", "")
