@@ -84,15 +84,13 @@ cleantitle = lambda title: ''.join(filter(string.printable.__contains__, title))
 
 
 def channel_api(data, command, rc, stdout, stderr):
+    global name
     try:
         jsonDict = json.loads(stdout.strip())
     except Exception as e:
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
-    if not len(jsonDict) == 22:
-        weechat.prnt(data, 'TWITCH: Error with twitch API')
-        return weechat.WEECHAT_RC_OK
     pcolor=weechat.color('chat_prefix_network')
     ccolor=weechat.color('chat')
     dcolor=weechat.color('chat_delimiters')
@@ -100,25 +98,38 @@ def channel_api(data, command, rc, stdout, stderr):
     ul=weechat.color("underline")
     rul=weechat.color("-underline")
     pformat=weechat.config_string(weechat.config_get("weechat.look.prefix_network"))
-    name = jsonDict['display_name']
-    create = jsonDict['created_at'].split('T')[0]
-    status = jsonDict['status']
-    follows = jsonDict['followers']
-    partner = str(jsonDict['partner'])
-    output = '%s%s %s[%s%s%s]%s %sAccount Created%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,create)
-    if status:
-        output += '\n%s%s %s[%s%s%s]%s %sStatus%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,cleantitle(status))
-    output += '\n%s%s %s[%s%s%s]%s %sPartnered%s: %s %sFollowers%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,partner,ul,rul,follows)
-    
-    weechat.prnt(data,output)
 
+    if len(jsonDict) == 22:
+        name = jsonDict['display_name']
+        create = jsonDict['created_at'].split('T')[0]
+        status = jsonDict['status']
+        follows = jsonDict['followers']
+        partner = str(jsonDict['partner'])
+        output = '%s%s %s[%s%s%s]%s %sAccount Created%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,create)
+        if status:
+            output += '\n%s%s %s[%s%s%s]%s %sStatus%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,cleantitle(status))
+        output += '\n%s%s %s[%s%s%s]%s %sPartnered%s: %s %sFollowers%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,partner,ul,rul,follows)
+        weechat.prnt(data,output)
+
+    if len(jsonDict) == 18:
+        name = jsonDict['display_name']
+        stid = jsonDict['steam_id']
+        if stid:
+            output = '%s%s %s[%s%s%s]%s %sSteam64ID%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,stid)
+            weechat.prnt(data,output)
+
+    if len(jsonDict) == 3:
+        count = jsonDict['_total']
+        if count:
+            output = '%s%s %s[%s%s%s]%s %sFollowing%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,count)
+            weechat.prnt(data,output)
     return weechat.WEECHAT_RC_OK
 
 
 def stream_api(data, command, rc, stdout, stderr):
     try:
         jsonDict = json.loads(stdout.strip())
-    except Exception as e: 
+    except Exception as e:
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
@@ -257,7 +268,7 @@ def twitch_privmsg(data, modifier, server_name, string):
     if not match:
         return string
     if match.group(1).startswith('#'): return string
-    newmsg='PRIVMSG jtv :.w '+match.group(1)+' '+match.group(2) 
+    newmsg='PRIVMSG jtv :.w '+match.group(1)+' '+match.group(2)
     return newmsg
 
 
@@ -290,8 +301,11 @@ def twitch_whois(data, modifier, server_name, string):
     if not match:
         return string
     url = 'https://api.twitch.tv/kraken/channels/' + username
-    url_hook_process = weechat.hook_process(
-        "curl "+url , 7 * 1000, "channel_api", currentbuf)
+    url2 = 'https://api.twitch.tv/api/channels/' + username
+    url3 = 'https://api.twitch.tv/kraken/users/'+username+'/follows/channels'
+    url_hook = weechat.hook_process("curl "+url , 7 * 1000, "channel_api", currentbuf)
+    url_hook2 = weechat.hook_process("curl "+url2 , 7 * 1000, "channel_api", currentbuf)
+    url_hook3 = weechat.hook_process("curl "+url3 , 7 * 1000, "channel_api", currentbuf)
     return ""
 
 
