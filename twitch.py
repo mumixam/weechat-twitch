@@ -59,28 +59,27 @@ def twitch_main(data, buffer, args):
         return weechat.WEECHAT_RC_OK
     url = 'https://api.twitch.tv/kraken/streams/' + username
     url_hook_process = weechat.hook_process(
-        "curl "+url , 7 * 1000, "stream_api", buffer)
+        "curl " + url, 7 * 1000, "stream_api", buffer)
     return weechat.WEECHAT_RC_OK
 
 
 gamelist = [
     "Counter-Strike: Global Offensive;CSGO",
     "World of Warcraft: Warlords of Draenor;WOW"
-    ]
+]
 
 
 def gameshort(game):
     global gamelist
     for games in gamelist:
-        gamelong=games.split(';')[0]
+        gamelong = games.split(';')[0]
         if gamelong.lower() == game.lower():
-            return('<'+games.split(';')[-1]+'>')
+            return('<' + games.split(';')[-1] + '>')
         else:
-            return '<'+game+'>'
+            return '<' + game + '>'
 
-cleantitle = lambda title: ''.join(filter(string.printable.__contains__, title))
-
-
+cleantitle = lambda title: ''.join(
+    filter(string.printable.__contains__, title))
 
 
 def channel_api(data, command, rc, stdout, stderr):
@@ -91,13 +90,14 @@ def channel_api(data, command, rc, stdout, stderr):
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
-    pcolor=weechat.color('chat_prefix_network')
-    ccolor=weechat.color('chat')
-    dcolor=weechat.color('chat_delimiters')
-    ncolor=weechat.color('chat_nick')
-    ul=weechat.color("underline")
-    rul=weechat.color("-underline")
-    pformat=weechat.config_string(weechat.config_get("weechat.look.prefix_network"))
+    pcolor = weechat.color('chat_prefix_network')
+    ccolor = weechat.color('chat')
+    dcolor = weechat.color('chat_delimiters')
+    ncolor = weechat.color('chat_nick')
+    ul = weechat.color("underline")
+    rul = weechat.color("-underline")
+    pformat = weechat.config_string(
+        weechat.config_get("weechat.look.prefix_network"))
 
     if len(jsonDict) == 22:
         name = jsonDict['display_name']
@@ -105,24 +105,47 @@ def channel_api(data, command, rc, stdout, stderr):
         status = jsonDict['status']
         follows = jsonDict['followers']
         partner = str(jsonDict['partner'])
-        output = '%s%s %s[%s%s%s]%s %sAccount Created%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,create)
+        output = '%s%s %s[%s%s%s]%s %sAccount Created%s: %s' % (
+            pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, create)
         if status:
-            output += '\n%s%s %s[%s%s%s]%s %sStatus%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,cleantitle(status))
-        output += '\n%s%s %s[%s%s%s]%s %sPartnered%s: %s %sFollowers%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,partner,ul,rul,follows)
-        weechat.prnt(data,output)
+            output += '\n%s%s %s[%s%s%s]%s %sStatus%s: %s' % (
+                pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, cleantitle(status))
+        output += '\n%s%s %s[%s%s%s]%s %sPartnered%s: %s %sFollowers%s: %s' % (
+            pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, partner, ul, rul, follows)
+        weechat.prnt(data, output)
+        url = 'https://api.twitch.tv/kraken/users/' + \
+            name.lower() + '/follows/channels'
+        urlh = weechat.hook_process(
+            "curl " + url, 7 * 1000, "channel_api", currentbuf)
 
     if len(jsonDict) == 18:
         name = jsonDict['display_name']
-        stid = jsonDict['steam_id']
-        if stid:
-            output = '%s%s %s[%s%s%s]%s %sSteam64ID%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,stid)
-            weechat.prnt(data,output)
+        s64id = jsonDict['steam_id']
+        if s64id:
+            sid3 = int(s64id) - 76561197960265728
+            highaid = "{0:b}".format(sid3).zfill(32)[:31]
+            lowaid = "{0:b}".format(sid3).zfill(32)[31:]
+            id32bit = "STEAM_0:%s:%s" % (lowaid, int(highaid, 2))
+
+            output = '%s%s %s[%s%s%s]%s %ssteamID64%s: %s %ssteamID3%s: %s %ssteamID%s: %s' % (
+                pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, s64id, ul, rul, sid3, ul, rul, id32bit)
+            weechat.prnt(data, output)
 
     if len(jsonDict) == 3:
-        count = jsonDict['_total']
-        if count:
-            output = '%s%s %s[%s%s%s]%s %sFollowing%s: %s' % (pcolor,pformat,dcolor,ncolor,name,dcolor,ccolor,ul,rul,count)
-            weechat.prnt(data,output)
+        if 'status' in jsonDict.keys():
+            if jsonDict['status'] == 404:
+                user = jsonDict['message'].split()[1].replace("'", "")
+                weechat.prnt(data, '%s%s %s[%s%s%s]%s No such user' % (
+                    pcolor, pformat, dcolor, ncolor, user, dcolor, ccolor))
+        else:
+            url = 'https://api.twitch.tv/api/channels/' + name.lower()
+            urlh = weechat.hook_process(
+                "curl " + url, 7 * 1000, "channel_api", currentbuf)
+            count = jsonDict['_total']
+            if count:
+                output = '%s%s %s[%s%s%s]%s %sFollowing%s: %s' % (
+                    pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, count)
+                weechat.prnt(data, output)
     return weechat.WEECHAT_RC_OK
 
 
@@ -133,14 +156,16 @@ def stream_api(data, command, rc, stdout, stderr):
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
-    title_fg=weechat.color(weechat.config_color(weechat.config_get("weechat.bar.title.color_fg")))
-    title_bg=weechat.color(weechat.config_color(weechat.config_get("weechat.bar.title.color_bg")))
-    pcolor=weechat.color('chat_prefix_network')
-    ccolor=weechat.color('chat')
-    red=weechat.color('red')
-    blue=weechat.color('blue')
-    green=weechat.color('green')
-    ptime=time.strftime("%H:%M:%S")
+    title_fg = weechat.color(
+        weechat.config_color(weechat.config_get("weechat.bar.title.color_fg")))
+    title_bg = weechat.color(
+        weechat.config_color(weechat.config_get("weechat.bar.title.color_bg")))
+    pcolor = weechat.color('chat_prefix_network')
+    ccolor = weechat.color('chat')
+    red = weechat.color('red')
+    blue = weechat.color('blue')
+    green = weechat.color('green')
+    ptime = time.strftime("%H:%M:%S")
     subs = weechat.buffer_get_string(data, 'localvar_subs')
     r9k = weechat.buffer_get_string(data, 'localvar_r9k')
     slow = weechat.buffer_get_string(data, 'localvar_slow')
@@ -148,14 +173,18 @@ def stream_api(data, command, rc, stdout, stderr):
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
     if not jsonDict['stream']:
-        line="STREAM: %sOFFLINE%s %sCHECKED AT: %s" % (red, title_fg, blue, ptime)
-        if subs: line += " %s[SUBS]" % title_fg
-        if r9k: line += " %s[R9K]" % title_fg
-        if slow: line += " %s[SLOW@%s]" % (title_fg,slow)
+        line = "STREAM: %sOFFLINE%s %sCHECKED AT: %s" % (
+            red, title_fg, blue, ptime)
+        if subs:
+            line += " %s[SUBS]" % title_fg
+        if r9k:
+            line += " %s[R9K]" % title_fg
+        if slow:
+            line += " %s[SLOW@%s]" % (title_fg, slow)
         weechat.buffer_set(data, "title", line)
     else:
         currenttime = time.time()
-        output='STREAM: %sLIVE%s' % (green, title_fg)
+        output = 'STREAM: %sLIVE%s' % (green, title_fg)
         if 'game' in jsonDict['stream']:
             game = gameshort(jsonDict['stream']['game'])
             output += ' %s with' % game
@@ -164,8 +193,9 @@ def stream_api(data, command, rc, stdout, stderr):
             output += ' %s viewers started' % viewers
         if 'created_at' in jsonDict['stream']:
             createtime = jsonDict['stream']['created_at'].replace('Z', 'GMT')
-            starttime = timegm(time.strptime(createtime,'%Y-%m-%dT%H:%M:%S%Z'))
-            dur=timedelta(seconds=currenttime-starttime)
+            starttime = timegm(
+                time.strptime(createtime, '%Y-%m-%dT%H:%M:%S%Z'))
+            dur = timedelta(seconds=currenttime - starttime)
             uptime = days_hours_minutes(dur)
             output += ' %s ago' % uptime
         if 'channel' in jsonDict['stream']:
@@ -176,20 +206,27 @@ def stream_api(data, command, rc, stdout, stderr):
                 title = cleantitle(jsonDict['stream']['channel']['status'])
                 oldtitle = weechat.buffer_get_string(data, 'localvar_tstatus')
                 if not oldtitle == title:
-                    weechat.prnt(data, '%s--%s Title is "%s"' % (pcolor, ccolor, title))
+                    weechat.prnt(data, '%s--%s Title is "%s"' %
+                                 (pcolor, ccolor, title))
                     weechat.buffer_set(data, 'localvar_set_tstatus', title)
             if 'updated_at' in jsonDict['stream']['channel']:
-                updateat = jsonDict['stream']['channel']['updated_at'].replace('Z', 'GMT')
-                updatetime = timegm(time.strptime(updateat,'%Y-%m-%dT%H:%M:%S%Z'))
-                udur = timedelta(seconds=currenttime-updatetime)
+                updateat = jsonDict['stream']['channel'][
+                    'updated_at'].replace('Z', 'GMT')
+                updatetime = timegm(
+                    time.strptime(updateat, '%Y-%m-%dT%H:%M:%S%Z'))
+                udur = timedelta(seconds=currenttime - updatetime)
                 titleage = days_hours_minutes(udur)
 
         output += ' %s' % ptime
-        if subs: output += " %s[SUBS]" % title_fg
-        if r9k: output += " %s[R9K]" % title_fg
-        if slow: output += " %s[SLOW@%s]" % (title_fg,slow)
+        if subs:
+            output += " %s[SUBS]" % title_fg
+        if r9k:
+            output += " %s[R9K]" % title_fg
+        if slow:
+            output += " %s[SLOW@%s]" % (title_fg, slow)
         weechat.buffer_set(data, "title", output)
     return weechat.WEECHAT_RC_OK
+
 
 def twitch_clearchat(data, modifier, modifier_data, string):
     string = string.split(" ")
@@ -197,31 +234,37 @@ def twitch_clearchat(data, modifier, modifier_data, string):
     server = modifier_data
     user = ""
     if len(string) == 4:
-        user = string[3].replace(":","")
+        user = string[3].replace(":", "")
     if not channel.startswith("#"):
         return ""
-    buffer = weechat.buffer_search("irc", "%s.%s" % (server,channel))
+    buffer = weechat.buffer_search("irc", "%s.%s" % (server, channel))
     if buffer:
-        pcolor=weechat.color('chat_prefix_network')
-        ccolor=weechat.color('chat')
+        pcolor = weechat.color('chat_prefix_network')
+        ccolor = weechat.color('chat')
         if user:
-            weechat.prnt(buffer,"%s--%s %s's Chat Cleared By Moderator" % (pcolor,ccolor,user))
+            weechat.prnt(
+                buffer, "%s--%s %s's Chat Cleared By Moderator" % (pcolor, ccolor, user))
         else:
-            weechat.prnt(buffer,"%s--%s Entire Chat Cleared By Moderator" % (pcolor,ccolor))
+            weechat.prnt(
+                buffer, "%s--%s Entire Chat Cleared By Moderator" % (pcolor, ccolor))
     return ""
+
 
 def twitch_suppress(data, modifier, modifier_data, string):
     return ""
+
 
 def twitch_reconnect(data, modifier, modifier_data, string):
     server = modifier_data
     buffer = weechat.buffer_search("irc", "server.%s" % server)
     if buffer:
-        pcolor=weechat.color('chat_prefix_network')
-        ccolor=weechat.color('chat')
-        weechat.prnt(buffer,"%s--%s Server sent reconnect request. Issuing /reconnect" % (pcolor,ccolor))
+        pcolor = weechat.color('chat_prefix_network')
+        ccolor = weechat.color('chat')
+        weechat.prnt(
+            buffer, "%s--%s Server sent reconnect request. Issuing /reconnect" % (pcolor, ccolor))
         weechat.command(buffer, "/reconnect")
     return ""
+
 
 def twitch_buffer_switch(data, signal, signal_data):
     server = weechat.buffer_get_string(signal_data, 'localvar_server')
@@ -233,8 +276,10 @@ def twitch_buffer_switch(data, signal, signal_data):
 
 
 def twitch_roomstate(data, modifier, server, string):
-    message = weechat.info_get_hashtable('irc_message_parse',{"message" : string})
-    buffer = weechat.buffer_search("irc", "%s.%s" % (server,message['channel']))
+    message = weechat.info_get_hashtable(
+        'irc_message_parse', {"message": string})
+    buffer = weechat.buffer_search(
+        "irc", "%s.%s" % (server, message['channel']))
     for tag in message['tags'].split(';'):
         if tag == 'subs-only=0':
             weechat.buffer_set(buffer, 'localvar_set_subs', '')
@@ -245,7 +290,7 @@ def twitch_roomstate(data, modifier, server, string):
         if tag == 'r9k=1':
             weechat.buffer_set(buffer, 'localvar_set_r9k', '1')
         if tag.startswith('slow='):
-            value=tag.split('=')[-1]
+            value = tag.split('=')[-1]
             if value == '0':
                 weechat.buffer_set(buffer, 'localvar_set_slow', '')
             if value > '0':
@@ -257,29 +302,35 @@ def twitch_roomstate(data, modifier, server, string):
 def twitch_whisper(data, modifier, modifier_data, string):
     liststr = string.split()
     if len(liststr) > 3:
-        if liststr[2] == "WHISPER": liststr[2] = "PRIVMSG"
-        if liststr[1] == "WHISPER": liststr[2] = "PRIVMSG"
+        if liststr[2] == "WHISPER":
+            liststr[2] = "PRIVMSG"
+        if liststr[1] == "WHISPER":
+            liststr[2] = "PRIVMSG"
     return ' '.join(liststr)
 
 
 def twitch_privmsg(data, modifier, server_name, string):
-    if not server_name == 'twitchgrp': return string
-    match = re.match(r"^PRIVMSG (.*?) :(.*)",string)
+    if not server_name == 'twitchgrp':
+        return string
+    match = re.match(r"^PRIVMSG (.*?) :(.*)", string)
     if not match:
         return string
-    if match.group(1).startswith('#'): return string
-    newmsg='PRIVMSG jtv :.w '+match.group(1)+' '+match.group(2)
+    if match.group(1).startswith('#'):
+        return string
+    newmsg = 'PRIVMSG jtv :.w ' + match.group(1) + ' ' + match.group(2)
     return newmsg
 
 
 def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
-    if not server_name == 'twitch': return string
+    if not server_name == 'twitch':
+        return string
 
     mp = weechat.info_get_hashtable("irc_message_parse", {"message": string})
 
-    if not mp['tags']: return string
-    if '#'+mp['nick'] == mp['channel']:
-        return mp['message_without_tags'].replace(mp['nick'],'~'+mp['nick'],1)
+    if not mp['tags']:
+        return string
+    if '#' + mp['nick'] == mp['channel']:
+        return mp['message_without_tags'].replace(mp['nick'], '~' + mp['nick'], 1)
 
     tags = dict([s.split('=') for s in mp['tags'].split(';')])
     if tags['user-type'] == 'mod':
@@ -287,25 +338,24 @@ def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
     if tags['subscriber'] == '1':
         prefix += '%'
     if prefix:
-        msg=mp['message_without_tags'].replace(mp['nick'],prefix+mp['nick'],1)
-        return '@'+mp['tags']+' '+msg
+        msg = mp['message_without_tags'].replace(
+            mp['nick'], prefix + mp['nick'], 1)
+        return '@' + mp['tags'] + ' ' + msg
     else:
         return string
 
 
 def twitch_whois(data, modifier, server_name, string):
-    if not server_name == 'twitch': return string
-    match = re.match(r"^WHOIS (\S+)",string)
+    if not server_name == 'twitch':
+        return string
+    match = re.match(r"^WHOIS (\S+)", string)
     currentbuf = weechat.current_buffer()
     username = match.group(1)
     if not match:
         return string
     url = 'https://api.twitch.tv/kraken/channels/' + username
-    url2 = 'https://api.twitch.tv/api/channels/' + username
-    url3 = 'https://api.twitch.tv/kraken/users/'+username+'/follows/channels'
-    url_hook = weechat.hook_process("curl "+url , 7 * 1000, "channel_api", currentbuf)
-    url_hook2 = weechat.hook_process("curl "+url2 , 7 * 1000, "channel_api", currentbuf)
-    url_hook3 = weechat.hook_process("curl "+url3 , 7 * 1000, "channel_api", currentbuf)
+    url_hook = weechat.hook_process(
+        "curl " + url, 7 * 1000, "channel_api", currentbuf)
     return ""
 
 
