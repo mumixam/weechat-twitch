@@ -133,7 +133,7 @@ def channel_api(data, command, rc, stdout, stderr):
 
     if len(jsonDict) == 3:
         if 'status' in jsonDict.keys():
-            if jsonDict['status'] == 404:
+            if jsonDict['status'] == 404 or jsonDict['status'] == 422:
                 user = jsonDict['message'].split()[1].replace("'", "")
                 weechat.prnt(data, '%s%s %s[%s%s%s]%s No such user' % (
                     pcolor, pformat, dcolor, ncolor, user, dcolor, ccolor))
