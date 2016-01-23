@@ -186,8 +186,9 @@ def stream_api(data, command, rc, stdout, stderr):
         currenttime = time.time()
         output = 'STREAM: %sLIVE%s' % (green, title_fg)
         if 'game' in jsonDict['stream']:
-            game = gameshort(jsonDict['stream']['game'])
-            output += ' %s with' % game
+            if jsonDict['stream']['game']:
+                game = gameshort(jsonDict['stream']['game'])
+                output += ' %s with' % game
         if 'viewers' in jsonDict['stream']:
             viewers = jsonDict['stream']['viewers']
             output += ' %s viewers started' % viewers
