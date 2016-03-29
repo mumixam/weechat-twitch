@@ -9,7 +9,6 @@ The Group server you will only be able to join Group chat channels and send and 
 
 This script also will prefix users nicks @ for mod, % for sub, and ~ for broadcaster. This will break the traditional function of `/ignore add nightbot` and will require you to prefix nicks if you want to ignore someone `/ignore add re:[~@%]{0,3}nightbot` should ignore a nick with all or none of the prefixes used by this script
 
-Notice: twitch is in the middle of moving chat servers you may need to use `http://tmi.twitch.tv/servers?channel=CHANNEL_NAME` to locate the correct server for the channel's chat you are looking for
 ```
 /server add twitch irc.twitch.tv
 /set irc.server.twitch.capabilities "twitch.tv/membership,twitch.tv/commands,twitch.tv/tags"
