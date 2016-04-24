@@ -301,13 +301,14 @@ def twitch_roomstate(data, modifier, server, string):
 
 
 def twitch_whisper(data, modifier, modifier_data, string):
-    liststr = string.split()
-    if len(liststr) > 3:
-        if liststr[2] == "WHISPER":
-            liststr[2] = "PRIVMSG"
-        if liststr[1] == "WHISPER":
-            liststr[1] = "PRIVMSG"
-    return ' '.join(liststr)
+    message = weechat.info_get_hashtable(
+        'irc_message_parse', {"message": string})
+    if message['tags']: string = '@'+message['tags']+' '
+    else: string = ''
+    string += ':'+message['host']
+    string += ' PRIVMSG'
+    string += ' '+message['arguments']
+    return string
 
 
 def twitch_privmsg(data, modifier, server_name, string):
