@@ -306,7 +306,7 @@ def twitch_whisper(data, modifier, modifier_data, string):
         if liststr[2] == "WHISPER":
             liststr[2] = "PRIVMSG"
         if liststr[1] == "WHISPER":
-            liststr[2] = "PRIVMSG"
+            liststr[1] = "PRIVMSG"
     return ' '.join(liststr)
 
 
