@@ -311,7 +311,7 @@ def twitch_whisper(data, modifier, modifier_data, string):
 
 
 def twitch_privmsg(data, modifier, server_name, string):
-    if not server_name == 'twitchgrp':
+    if not server_name == 'twitch':
         return string
     match = re.match(r"^PRIVMSG (.*?) :(.*)", string)
     if not match:
