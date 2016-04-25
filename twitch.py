@@ -25,7 +25,6 @@ from calendar import timegm
 from datetime import datetime, timedelta
 import time
 import string
-import re
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
@@ -349,11 +348,9 @@ def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
 def twitch_whois(data, modifier, server_name, string):
     if not server_name == 'twitch':
         return string
-    match = re.match(r"^WHOIS (\S+)", string)
+    msg = weechat.info_get_hashtable("irc_message_parse", {"message": string})
+    username = msg['nick']
     currentbuf = weechat.current_buffer()
-    username = match.group(1)
-    if not match:
-        return string
     url = 'https://api.twitch.tv/kraken/channels/' + username
     url_hook = weechat.hook_process(
         "curl " + url, 7 * 1000, "channel_api", currentbuf)
