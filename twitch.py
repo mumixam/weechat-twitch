@@ -314,12 +314,11 @@ def twitch_whisper(data, modifier, modifier_data, string):
 def twitch_privmsg(data, modifier, server_name, string):
     if not server_name == 'twitch':
         return string
-    match = re.match(r"^PRIVMSG (.*?) :(.*)", string)
-    if not match:
+    message = weechat.info_get_hashtable(
+        'irc_message_parse', {"message": string})
+    if message['channel'].startswith('#'):
         return string
-    if match.group(1).startswith('#'):
-        return string
-    newmsg = 'PRIVMSG jtv :.w ' + match.group(1) + ' ' + match.group(2)
+    newmsg = 'PRIVMSG jtv :.w ' + message['nick'] + ' ' + message['text']
     return newmsg
 
 
