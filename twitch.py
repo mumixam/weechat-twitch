@@ -64,7 +64,10 @@ def twitch_main(data, buffer, args):
 
 gamelist = [
     "Counter-Strike: Global Offensive;CSGO",
-    "World of Warcraft: Warlords of Draenor;WOW"
+    "World of Warcraft: Warlords of Draenor;WOW",
+    "Hearthstone: Heroes of Warcraft;Hearthstone",
+    "H1Z1: King of the Kill;H1Z1 KotK",
+    "Tom Clancy\'s The Division;The Division"
 ]
 
 
@@ -74,8 +77,8 @@ def gameshort(game):
         gamelong = games.split(';')[0]
         if gamelong.lower() == game.lower():
             return('<' + games.split(';')[-1] + '>')
-        else:
-            return '<' + game + '>'
+    return '<' + game + '>'
+
 
 cleantitle = lambda title: ''.join(
     filter(string.printable.__contains__, title))
