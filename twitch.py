@@ -79,11 +79,6 @@ def gameshort(game):
             return('<' + games.split(';')[-1] + '>')
     return '<' + game + '>'
 
-
-cleantitle = lambda title: ''.join(
-    filter(string.printable.__contains__, title))
-
-
 def channel_api(data, command, rc, stdout, stderr):
     global name
     try:
@@ -111,10 +106,10 @@ def channel_api(data, command, rc, stdout, stderr):
             pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, create)
         if status:
             output += '\n%s%s %s[%s%s%s]%s %sStatus%s: %s' % (
-                pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, cleantitle(status))
+                pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, status)
         output += '\n%s%s %s[%s%s%s]%s %sPartnered%s: %s %sFollowers%s: %s' % (
             pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, partner, ul, rul, follows)
-        weechat.prnt(data, output)
+        weechat.prnt(data, output.encode('utf8'))
         url = 'https://api.twitch.tv/kraken/users/' + \
             name.lower() + '/follows/channels'
         urlh = weechat.hook_process(
@@ -206,12 +201,13 @@ def stream_api(data, command, rc, stdout, stderr):
                 followers = jsonDict['stream']['channel']['followers']
                 output += ' [%s followers]' % followers
             if 'status' in jsonDict['stream']['channel']:
-                title = cleantitle(jsonDict['stream']['channel']['status'])
+                titleutf8=jsonDict['stream']['channel']['status'].encode('utf8')
+                titleascii=jsonDict['stream']['channel']['status'].encode('ascii','replace')
                 oldtitle = weechat.buffer_get_string(data, 'localvar_tstatus')
-                if not oldtitle == title:
+                if not oldtitle == titleascii:
                     weechat.prnt(data, '%s--%s Title is "%s"' %
-                                 (pcolor, ccolor, title))
-                    weechat.buffer_set(data, 'localvar_set_tstatus', title)
+                                 (pcolor, ccolor, titleutf8))
+                    weechat.buffer_set(data, 'localvar_set_tstatus', titleascii)
             if 'updated_at' in jsonDict['stream']['channel']:
                 updateat = jsonDict['stream']['channel'][
                     'updated_at'].replace('Z', 'GMT')
