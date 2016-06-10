@@ -109,7 +109,10 @@ def channel_api(data, command, rc, stdout, stderr):
                 pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, status)
         output += '\n%s%s %s[%s%s%s]%s %sPartnered%s: %s %sFollowers%s: %s' % (
             pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, partner, ul, rul, follows)
-        weechat.prnt(data, output.encode('utf8'))
+        output = output.encode('utf8')
+        if not isinstance(output, str):
+            output=str(output,'utf8')
+        weechat.prnt(data, output)
         url = 'https://api.twitch.tv/kraken/users/' + \
             name.lower() + '/follows/channels'
         urlh = weechat.hook_process(
@@ -203,6 +206,9 @@ def stream_api(data, command, rc, stdout, stderr):
             if 'status' in jsonDict['stream']['channel']:
                 titleutf8=jsonDict['stream']['channel']['status'].encode('utf8')
                 titleascii=jsonDict['stream']['channel']['status'].encode('ascii','replace')
+                if not isinstance(titleutf8, str):
+                    titleascii=str(titleascii,'utf8')
+                    titleutf8=str(titleutf8,'utf8')
                 oldtitle = weechat.buffer_get_string(data, 'localvar_tstatus')
                 if not oldtitle == titleascii:
                     weechat.prnt(data, '%s--%s Title is "%s"' %
