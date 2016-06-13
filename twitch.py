@@ -234,25 +234,47 @@ def stream_api(data, command, rc, stdout, stderr):
 
 
 def twitch_clearchat(data, modifier, modifier_data, string):
-    string = string.split(" ")
-    channel = string[2]
+
+    mp = weechat.info_get_hashtable(
+    'irc_message_parse', {"message": string})
     server = modifier_data
-    user = ""
-    if len(string) == 4:
-        user = string[3].replace(":", "")
-    if not channel.startswith("#"):
-        return ""
+    user = mp['text']
+    channel = mp['channel']
+    try:
+        tags = dict([s.split('=') for s in mp['tags'].split(';')])
+    except:
+        tags = ''
     buffer = weechat.buffer_search("irc", "%s.%s" % (server, channel))
     if buffer:
         pcolor = weechat.color('chat_prefix_network')
         ccolor = weechat.color('chat')
+        ul = weechat.color("underline")
+        rul = weechat.color("-underline")
         if user:
-            weechat.prnt(
-                buffer, "%s--%s %s's Chat Cleared By Moderator" % (pcolor, ccolor, user))
+            if 'ban-duration' in tags:
+                if tags['ban-reason']:
+                    bn=tags['ban-reason'].replace('\s',' ')
+                    weechat.prnt(buffer,"%s--%s %s has been timed out for %s seconds %sReason%s: %s" %
+                        (pcolor, ccolor, user, tags['ban-duration'], ul, rul, bn))
+                else:
+                    weechat.prnt(buffer,"%s--%s %s has been timed out for %s seconds" %
+                        (pcolor, ccolor, user, tags['ban-duration']))
+            elif 'ban-reason' in tags:
+                if tags['ban-reason']:
+                    bn=tags['ban-reason'].replace('\s',' ')
+                    weechat.prnt(buffer,"%s--%s %s has been banned %sReason%s: %s" %
+                        (pcolor, ccolor, user, ul, rul,bn))
+                else:
+                    weechat.prnt(buffer,"%s--%s %s has been banned" %
+                        (pcolor, ccolor, user))
+            else:
+                weechat.prnt(
+                    buffer, "%s--%s %s's Chat Cleared By Moderator" % (pcolor, ccolor, user))
         else:
             weechat.prnt(
                 buffer, "%s--%s Entire Chat Cleared By Moderator" % (pcolor, ccolor))
     return ""
+
 
 
 def twitch_suppress(data, modifier, modifier_data, string):
