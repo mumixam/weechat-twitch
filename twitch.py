@@ -169,6 +169,7 @@ def stream_api(data, command, rc, stdout, stderr):
     subs = weechat.buffer_get_string(data, 'localvar_subs')
     r9k = weechat.buffer_get_string(data, 'localvar_r9k')
     slow = weechat.buffer_get_string(data, 'localvar_slow')
+    emote = weechat.buffer_get_string(data, 'localvar_emote')
     if not 'stream' in jsonDict.keys():
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
@@ -181,6 +182,8 @@ def stream_api(data, command, rc, stdout, stderr):
             line += " %s[R9K]" % title_fg
         if slow:
             line += " %s[SLOW@%s]" % (title_fg, slow)
+        if emote:
+            line += " %s[EMOTE]" % title_fg
         weechat.buffer_set(data, "title", line)
     else:
         currenttime = time.time()
@@ -229,6 +232,8 @@ def stream_api(data, command, rc, stdout, stderr):
             output += " %s[R9K]" % title_fg
         if slow:
             output += " %s[SLOW@%s]" % (title_fg, slow)
+        if emote:
+            output += " %s[EMOTE]" % title_fg
         weechat.buffer_set(data, "title", output)
     return weechat.WEECHAT_RC_OK
 
@@ -316,6 +321,10 @@ def twitch_roomstate(data, modifier, server, string):
             weechat.buffer_set(buffer, 'localvar_set_r9k', '')
         if tag == 'r9k=1':
             weechat.buffer_set(buffer, 'localvar_set_r9k', '1')
+        if tag == 'emote-only=0':
+            weechat.buffer_set(buffer, 'localvar_set_emote', '')
+        if tag == 'emote-only=1':
+            weechat.buffer_set(buffer, 'localvar_set_emote', '1')
         if tag.startswith('slow='):
             value = tag.split('=')[-1]
             if value == '0':
