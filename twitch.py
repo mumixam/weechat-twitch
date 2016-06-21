@@ -335,6 +335,23 @@ def twitch_roomstate(data, modifier, server, string):
     return ''
 
 
+def twitch_usernotice(data, modifier, server, string):
+
+    pcolor = weechat.color('chat_prefix_network')
+    ccolor = weechat.color('chat')
+    mp = weechat.info_get_hashtable(
+        'irc_message_parse', {"message": string})
+    buffer = weechat.buffer_search(
+        "irc", "%s.%s" % (server, mp['channel']))
+    if mp['tags']:
+        tags = dict([s.split('=') for s in mp['tags'].split(';')])
+        msg = tags['system-msg'].replace('\s',' ')
+        if mp['text']:
+            msg += ' [Comment] '+mp['text']
+        weechat.prnt(buffer, '%s--%s %s' % (pcolor, ccolor, msg))
+    return ''
+
+
 def twitch_whisper(data, modifier, modifier_data, string):
     message = weechat.info_get_hashtable(
         'irc_message_parse', {"message": string})
@@ -402,6 +419,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_roomstate", "")
+    weechat.hook_modifier("irc_in_USERNOTICE", "twitch_usernotice", "")
     weechat.hook_modifier("irc_in_WHISPER", "twitch_whisper", "")
     weechat.hook_modifier("irc_out_PRIVMSG", "twitch_privmsg", "")
     weechat.hook_modifier("irc_out_WHOIS", "twitch_whois", "")
