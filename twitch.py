@@ -32,8 +32,6 @@ SCRIPT_VERSION = "0.1"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Display stream status in title bar of buffer"
 
-process_output = ""
-
 
 def days_hours_minutes(td):
     age = ''
@@ -58,7 +56,7 @@ def twitch_main(data, buffer, args):
         return weechat.WEECHAT_RC_OK
     url = 'https://api.twitch.tv/kraken/streams/' + username
     url_hook_process = weechat.hook_process(
-        "curl " + url, 7 * 1000, "stream_api", buffer)
+        "url:" + url, 7 * 1000, "stream_api", buffer)
     return weechat.WEECHAT_RC_OK
 
 
@@ -79,6 +77,7 @@ def gameshort(game):
             return('<' + games.split(';')[-1] + '>')
     return '<' + game + '>'
 
+
 def channel_api(data, command, rc, stdout, stderr):
     global name
     try:
@@ -95,7 +94,6 @@ def channel_api(data, command, rc, stdout, stderr):
     rul = weechat.color("-underline")
     pformat = weechat.config_string(
         weechat.config_get("weechat.look.prefix_network"))
-
     if len(jsonDict) == 22:
         name = jsonDict['display_name']
         create = jsonDict['created_at'].split('T')[0]
@@ -116,7 +114,7 @@ def channel_api(data, command, rc, stdout, stderr):
         url = 'https://api.twitch.tv/kraken/users/' + \
             name.lower() + '/follows/channels'
         urlh = weechat.hook_process(
-            "curl " + url, 7 * 1000, "channel_api", currentbuf)
+            "url:" + url, 7 * 1000, "channel_api", currentbuf)
 
     if len(jsonDict) == 18:
         name = jsonDict['display_name']
@@ -140,7 +138,7 @@ def channel_api(data, command, rc, stdout, stderr):
         else:
             url = 'https://api.twitch.tv/api/channels/' + name.lower()
             urlh = weechat.hook_process(
-                "curl " + url, 7 * 1000, "channel_api", currentbuf)
+                "url:" + url, 7 * 1000, "channel_api", currentbuf)
             count = jsonDict['_total']
             if count:
                 output = '%s%s %s[%s%s%s]%s %sFollowing%s: %s' % (
@@ -239,7 +237,6 @@ def stream_api(data, command, rc, stdout, stderr):
 
 
 def twitch_clearchat(data, modifier, modifier_data, string):
-
     mp = weechat.info_get_hashtable(
     'irc_message_parse', {"message": string})
     server = modifier_data
@@ -279,7 +276,6 @@ def twitch_clearchat(data, modifier, modifier_data, string):
             weechat.prnt(
                 buffer, "%s--%s Entire Chat Cleared By Moderator" % (pcolor, ccolor))
     return ""
-
 
 
 def twitch_suppress(data, modifier, modifier_data, string):
@@ -336,7 +332,6 @@ def twitch_roomstate(data, modifier, server, string):
 
 
 def twitch_usernotice(data, modifier, server, string):
-
     pcolor = weechat.color('chat_prefix_network')
     ccolor = weechat.color('chat')
     mp = weechat.info_get_hashtable(
@@ -406,7 +401,7 @@ def twitch_whois(data, modifier, server_name, string):
     currentbuf = weechat.current_buffer()
     url = 'https://api.twitch.tv/kraken/channels/' + username
     url_hook = weechat.hook_process(
-        "curl " + url, 7 * 1000, "channel_api", currentbuf)
+        "url:" + url, 7 * 1000, "channel_api", currentbuf)
     return ""
 
 
