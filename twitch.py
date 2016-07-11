@@ -14,17 +14,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #
-# This script checks stream status of any channel on the 'twitch' server
-# when you switch to its buffer and displays it in topic/title bar.
-# It also displays stream title in channel when change is detected.
-# Force status update by issuing /twitch in buffer
-
-import weechat
-import json
-from calendar import timegm
-from datetime import datetime, timedelta
-import time
-import string
+# This script checks stream status of any channel on any servers
+# listed in the "plugins.var.python.twitch.servers" setting. When you
+# switch to a buffer it will display updated infomation about the stream
+# in the title bar. Typing '/twitch' in buffer will also fetch updated
+# infomation. '/whois nick' will lookup user info and display it in current
+# buffer.
+#
+# settings:
+# plugins.var.python.twitch.servers (default: twitch)
+# plugins.var.python.twitch.prefix_nicks (default: 1)
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
@@ -32,9 +31,17 @@ SCRIPT_VERSION = "0.1"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Display stream status in title bar of buffer"
 OPTIONS={ 
-    'servers': ('twitch','Name of server(s) which script will be active on'),
+    'servers': ('twitch','Name of server(s) which script will be active on, space seperated'),
     'prefix_nicks': (1L,'Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]')
 }
+
+
+import weechat
+import json
+from calendar import timegm
+from datetime import datetime, timedelta
+import time
+import string
 
 
 def days_hours_minutes(td):
