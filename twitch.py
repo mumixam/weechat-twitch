@@ -31,6 +31,10 @@ SCRIPT_AUTHOR = "mumixam"
 SCRIPT_VERSION = "0.1"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Display stream status in title bar of buffer"
+OPTIONS={ 
+    'servers': ('twitch','Name of server(s) which script will be active on'),
+    'prefix_nicks': (1L,'Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]')
+}
 
 
 def days_hours_minutes(td):
@@ -52,7 +56,7 @@ def twitch_main(data, buffer, args):
     username = weechat.buffer_get_string(buffer, 'short_name').replace('#', '')
     server = weechat.buffer_get_string(buffer, 'localvar_server')
     type = weechat.buffer_get_string(buffer, 'localvar_type')
-    if not (server == 'twitch' and type == 'channel'):
+    if not (server in OPTIONS['servers'].split() and type == 'channel'):
         return weechat.WEECHAT_RC_OK
     url = 'https://api.twitch.tv/kraken/streams/' + username
     url_hook_process = weechat.hook_process(
@@ -70,7 +74,6 @@ gamelist = [
 
 
 def gameshort(game):
-    global gamelist
     for games in gamelist:
         gamelong = games.split(';')[0]
         if gamelong.lower() == game.lower():
@@ -297,7 +300,7 @@ def twitch_reconnect(data, modifier, modifier_data, string):
 def twitch_buffer_switch(data, signal, signal_data):
     server = weechat.buffer_get_string(signal_data, 'localvar_server')
     type = weechat.buffer_get_string(signal_data, 'localvar_type')
-    if not (server == 'twitch' and type == 'channel'):
+    if not (server in OPTIONS['servers'].split() and type == 'channel'):
         return weechat.WEECHAT_RC_OK
     twitch_main('', signal_data, 'bs')
     return weechat.WEECHAT_RC_OK
@@ -359,7 +362,7 @@ def twitch_whisper(data, modifier, modifier_data, string):
 
 
 def twitch_privmsg(data, modifier, server_name, string):
-    if not server_name == 'twitch':
+    if not server_name in OPTIONS['servers'].split():
         return string
     message = weechat.info_get_hashtable(
         'irc_message_parse', {"message": string})
@@ -370,7 +373,8 @@ def twitch_privmsg(data, modifier, server_name, string):
 
 
 def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
-    if not server_name == 'twitch':
+    if not OPTIONS['prefix_nicks']: return string
+    if not server_name in OPTIONS['servers'].split():
         return string
 
     mp = weechat.info_get_hashtable("irc_message_parse", {"message": string})
@@ -394,7 +398,7 @@ def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
 
 
 def twitch_whois(data, modifier, server_name, string):
-    if not server_name == 'twitch':
+    if not server_name in OPTIONS['servers'].split():
         return string
     msg = weechat.info_get_hashtable("irc_message_parse", {"message": string})
     username = msg['nick']
@@ -404,11 +408,33 @@ def twitch_whois(data, modifier, server_name, string):
         "url:" + url, 7 * 1000, "channel_api", currentbuf)
     return ""
 
+def config_setup():
+    for option,value in OPTIONS.items():
+        weechat.config_set_desc_plugin(option, '%s' % value[1])
+        if not weechat.config_is_set_plugin(option):
+            weechat.config_set_plugin(option, value[0])
+            OPTIONS[option] = value[0]
+        else:
+            if option == 'prefix_nicks':
+                OPTIONS[option] = weechat.config_string_to_boolean(
+                    weechat.config_get_plugin(option))
+            else:
+                OPTIONS[option] = weechat.config_get_plugin(option)
+
+def config_change(pointer, name, value):
+    option = name.replace('plugins.var.python.'+SCRIPT_NAME+'.','')
+    if option == 'prefix_nicks':
+        value=weechat.config_string_to_boolean(value)
+    OPTIONS[option] = value
+    return weechat.WEECHAT_RC_OK
+
 
 if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
                     SCRIPT_DESC, "", ""):
     weechat.hook_command("twitch", SCRIPT_DESC, "", "", "", "twitch_main", "")
     weechat.hook_signal('buffer_switch', 'twitch_buffer_switch', '')
+    weechat.hook_config('plugins.var.python.' + SCRIPT_NAME + '.*', 'config_change', '')
+    config_setup()
     weechat.hook_modifier("irc_in_CLEARCHAT", "twitch_clearchat", "")
     weechat.hook_modifier("irc_in_RECONNECT", "twitch_reconnect", "")
     weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
