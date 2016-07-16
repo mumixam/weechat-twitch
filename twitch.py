@@ -178,6 +178,12 @@ def stream_api(data, command, rc, stdout, stderr):
     r9k = weechat.buffer_get_string(data, 'localvar_r9k')
     slow = weechat.buffer_get_string(data, 'localvar_slow')
     emote = weechat.buffer_get_string(data, 'localvar_emote')
+    if 'status' in jsonDict.keys():
+        if jsonDict['status'] == 422:
+            weechat.prnt(data, 'ERROR: The community has closed this channel due to terms of service violations.')
+        if jsonDict['status'] == 404:
+            weechat.prnt(data, 'ERROR: The page could not be found, or has been deleted by its owner.')
+        return weechat.WEECHAT_RC_OK
     if not 'stream' in jsonDict.keys():
         weechat.prnt(data, 'TWITCH: Error with twitch API')
         return weechat.WEECHAT_RC_OK
