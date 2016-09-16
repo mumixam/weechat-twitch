@@ -43,6 +43,8 @@ from datetime import datetime, timedelta
 import time
 import string
 
+clientid='awtv6n371jb7uayyc4jaljochyjbfxs'
+params = '?client_id='+clientid
 
 def days_hours_minutes(td):
     age = ''
@@ -67,7 +69,7 @@ def twitch_main(data, buffer, args):
         return weechat.WEECHAT_RC_OK
     url = 'https://api.twitch.tv/kraken/streams/' + username
     url_hook_process = weechat.hook_process(
-        "url:" + url, 7 * 1000, "stream_api", buffer)
+        "url:" + url+params, 7 * 1000, "stream_api", buffer)
     return weechat.WEECHAT_RC_OK
 
 
@@ -124,7 +126,7 @@ def channel_api(data, command, rc, stdout, stderr):
         url = 'https://api.twitch.tv/kraken/users/' + \
             name.lower() + '/follows/channels'
         urlh = weechat.hook_process(
-            "url:" + url, 7 * 1000, "channel_api", currentbuf)
+            "url:" + url+params, 7 * 1000, "channel_api", currentbuf)
 
     if len(jsonDict) == 18:
         name = jsonDict['display_name']
@@ -148,7 +150,7 @@ def channel_api(data, command, rc, stdout, stderr):
         else:
             url = 'https://api.twitch.tv/api/channels/' + name.lower()
             urlh = weechat.hook_process(
-                "url:" + url, 7 * 1000, "channel_api", currentbuf)
+                "url:" + url+params, 7 * 1000, "channel_api", currentbuf)
             count = jsonDict['_total']
             if count:
                 output = '%s%s %s[%s%s%s]%s %sFollowing%s: %s' % (
@@ -418,7 +420,7 @@ def twitch_whois(data, modifier, server_name, string):
     currentbuf = weechat.current_buffer()
     url = 'https://api.twitch.tv/kraken/channels/' + username
     url_hook = weechat.hook_process(
-        "url:" + url, 7 * 1000, "channel_api", currentbuf)
+        "url:" + url+params, 7 * 1000, "channel_api", currentbuf)
     return ""
 
 def config_setup():
