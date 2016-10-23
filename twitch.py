@@ -32,7 +32,7 @@ SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "Display stream status in title bar of buffer"
 OPTIONS={ 
     'servers': ('twitch','Name of server(s) which script will be active on, space seperated'),
-    'prefix_nicks': (1L,'Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]')
+    'prefix_nicks': ('1','Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]')
 }
 
 
