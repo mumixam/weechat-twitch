@@ -465,8 +465,8 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         "  This script checks stream status of any channel on any servers listed\n"
         "  in the \"plugins.var.python.twitch.servers\" setting. When you switch\n"
         "  to a buffer it will display updated infomation about the stream in the\n"
-        "  title bar. Typing '/twitch' in buffer will also fetch updated infomation.\n"
-        "  '/whois nick' will lookup user info and display it in currentbuffer.\n\n"
+        "  title bar. Typing '/twitch' in a buffer will also fetch updated infomation.\n"
+        "  '/whois nick' will lookup user info and display it in current buffer.\n\n"
         "  Option \"plugins.var.python.twitch.servers\" controls\n"
         "  what server this script will work on. The default is twitch\n"
         "  but you can have multiples separated by a space.\n"
@@ -489,7 +489,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         "  If you do not have a oauth token one can be generated for your account here\n"
         "    https://twitchapps.com/tmi/\n"
         "\n"
-        "  This script also has whisper support via \"/query user\"\n\n",
+        "  This script also has whisper support that works like a standard query. \"/query user\"\n\n",
         "", "twitch_main", "")
     weechat.hook_signal('buffer_switch', 'twitch_buffer_switch', '')
     weechat.hook_config('plugins.var.python.' + SCRIPT_NAME + '.*', 'config_change', '')
