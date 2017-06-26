@@ -31,3 +31,8 @@ You can also issue `/twitch` in a stream's chat buffer to request a update and d
 -- [justin] Following: 33
 -- [justin] Steam64ID: 76561197960265728 steamID3: 1 steamID: STEAM_0:0:1
 ```
+
+If you are experiencing errors you can enable debug mode by setting
+```
+/set plugins.var.python.twitch.debug on
+```
