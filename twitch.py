@@ -26,6 +26,7 @@
 # settings:
 # plugins.var.python.twitch.servers (default: twitch)
 # plugins.var.python.twitch.prefix_nicks (default: 1)
+# plugins.var.python.twitch.debug (default: 0)
 #
 # # History:
 #
@@ -45,7 +46,8 @@ SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "twitch.tv Chat Integration"
 OPTIONS={ 
     'servers': ('twitch','Name of server(s) which script will be active on, space seperated'),
-    'prefix_nicks': ('1','Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]')
+    'prefix_nicks': ('1','Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]'),
+    'debug': ('0','Debug mode')
 }
 
 
@@ -59,7 +61,7 @@ import ast
 
 clientid='awtv6n371jb7uayyc4jaljochyjbfxs'
 params = '?client_id='+clientid
-
+curlopt = {"timeout": "5"}
 def days_hours_minutes(td):
     age = ''
     hours = td.seconds // 3600
@@ -82,8 +84,8 @@ def twitch_main(data, buffer, args):
     if not (server in OPTIONS['servers'].split() and type == 'channel'):
         return weechat.WEECHAT_RC_OK
     url = 'https://api.twitch.tv/kraken/streams/' + username
-    url_hook_process = weechat.hook_process(
-        "url:" + url+params, 7 * 1000, "stream_api", buffer)
+    weechat.hook_process_hashtable(
+        "url:" + url+params, curlopt, 7 * 1000, "stream_api", buffer)
     return weechat.WEECHAT_RC_OK
 
 
@@ -114,7 +116,12 @@ def channel_api(data, command, rc, stdout, stderr):
     try:
         jsonDict = json.loads(stdout.strip())
     except Exception as e:
-        weechat.prnt(data['buffer'], 'TWITCH: Error with twitch API')
+        weechat.prnt(data['buffer'], '%stwitch.py: error communicating with twitch api' % weechat.prefix('error'))
+        if OPTIONS['debug']:
+            weechat.prnt(data['buffer'],'%stwitch.py: return code: %s' % (weechat.prefix('error'),rc))
+            weechat.prnt(data['buffer'],'%stwitch.py: stdout: %s' % (weechat.prefix('error'),stdout))
+            weechat.prnt(data['buffer'],'%stwitch.py: stderr: %s' % (weechat.prefix('error'),stderr))
+            weechat.prnt(data['buffer'],'%stwitch.py: exception: %s' % (weechat.prefix('error'),e))
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
     name = data['name']
@@ -144,8 +151,8 @@ def channel_api(data, command, rc, stdout, stderr):
         weechat.prnt(data['buffer'], makeutf8(output))
         url = 'https://api.twitch.tv/kraken/users/' + \
             name.lower() + '/follows/channels'
-        urlh = weechat.hook_process(
-            "url:" + url+params, 7 * 1000, "channel_api", str({'buffer': currentbuf, 'name': name, 'dname': dname}))
+        weechat.hook_process_hashtable(
+            "url:" + url+params, curlopt, 7 * 1000, "channel_api", str({'buffer': currentbuf, 'name': name, 'dname': dname}))
 
     if len(jsonDict) == 18:
         dname = jsonDict['display_name']
@@ -168,8 +175,8 @@ def channel_api(data, command, rc, stdout, stderr):
                     pcolor, pformat, dcolor, ncolor, user, dcolor, ccolor))
         else:
             url = 'https://api.twitch.tv/api/channels/' + data['name'].lower()
-            urlh = weechat.hook_process(
-                "url:" + url+params, 7 * 1000, "channel_api", str({'buffer': currentbuf, 'name': name, 'dname': data['name']}))
+            weechat.hook_process_hashtable(
+                "url:" + url+params, curlopt, 7 * 1000, "channel_api", str({'buffer': currentbuf, 'name': name, 'dname': data['name']}))
             count = jsonDict['_total']
             if count:
                 output = '%s%s %s[%s%s%s]%s %sFollowing%s: %s' % (
@@ -182,7 +189,12 @@ def stream_api(data, command, rc, stdout, stderr):
     try:
         jsonDict = json.loads(stdout.strip())
     except Exception as e:
-        weechat.prnt(data, 'TWITCH: Error with twitch API')
+        weechat.prnt(data, '%stwitch.py: error communicating with twitch api' % weechat.prefix('error'))
+        if OPTIONS['debug']: 
+            weechat.prnt(data,'%stwitch.py: return code: %s' % (weechat.prefix('error'),rc))
+            weechat.prnt(data,'%stwitch.py: stdout: %s' % (weechat.prefix('error'),stdout))
+            weechat.prnt(data,'%stwitch.py: stderr: %s' % (weechat.prefix('error'),stderr))
+            weechat.prnt(data,'%stwitch.py: exception: %s' % (weechat.prefix('error'),e))
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
     title_fg = weechat.color(
@@ -206,7 +218,7 @@ def stream_api(data, command, rc, stdout, stderr):
             weechat.prnt(data, 'ERROR: The page could not be found, or has been deleted by its owner.')
         return weechat.WEECHAT_RC_OK
     if not 'stream' in jsonDict.keys():
-        weechat.prnt(data, 'TWITCH: Error with twitch API')
+        weechat.prnt(data, 'twitch.py: Error with twitch API (stream key missing from json)')
         return weechat.WEECHAT_RC_OK
     if not jsonDict['stream']:
         line = "STREAM: %sOFFLINE%s %sCHECKED AT: %s" % (
@@ -402,7 +414,7 @@ def twitch_privmsg(data, modifier, server_name, string):
         'irc_message_parse', {"message": string})
     if message['channel'].startswith('#'):
         return string
-    newmsg = 'PRIVMSG jtv :.w ' + message['nick'] + ' ' + message['text']
+    newmsg = 'PRIVMSG #%s :/w %s %s' % (message['nick'],message['nick'],message['text'])
     return newmsg
 
 
@@ -438,8 +450,8 @@ def twitch_whois(data, modifier, server_name, string):
     username = msg['nick'].lower()
     currentbuf = weechat.current_buffer()
     url = 'https://api.twitch.tv/kraken/channels/' + username
-    url_hook = weechat.hook_process(
-        "url:" + url+params, 7 * 1000, "channel_api", str({'buffer': currentbuf, 'name': username}))
+    url_hook = weechat.hook_process_hashtable(
+        "url:" + url+params, curlopt, 7 * 1000, "channel_api", str({'buffer': currentbuf, 'name': username}))
     return ""
 
 def config_setup():
@@ -449,7 +461,7 @@ def config_setup():
             weechat.config_set_plugin(option, value[0])
             OPTIONS[option] = value[0]
         else:
-            if option == 'prefix_nicks':
+            if option == 'prefix_nicks' or option == 'debug':
                 OPTIONS[option] = weechat.config_string_to_boolean(
                     weechat.config_get_plugin(option))
             else:
@@ -457,7 +469,7 @@ def config_setup():
 
 def config_change(pointer, name, value):
     option = name.replace('plugins.var.python.'+SCRIPT_NAME+'.','')
-    if option == 'prefix_nicks':
+    if option == 'prefix_nicks' or option == 'debug':
         value=weechat.config_string_to_boolean(value)
     OPTIONS[option] = value
     return weechat.WEECHAT_RC_OK
@@ -469,6 +481,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         "  settings:\n"
         "    plugins.var.python.twitch.servers (default: twitch)\n"
         "    plugins.var.python.twitch.prefix_nicks (default: 1)\n"
+        "    plugins.var.python.twitch.debug (default: 0)\n"
         "\n\n"
         "  This script checks stream status of any channel on any servers listed\n"
         "  in the \"plugins.var.python.twitch.servers\" setting. When you switch\n"
@@ -482,11 +495,14 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         "\n\n"
         "  This script also will prefix users nicks (@ for mod, % for sub,\n"
         "  and ~ for broadcaster). This will break the traditional function\n"
-        "  of /ignore add nightbot and will require you to prefix nicks if you\n"
-        "  want to ignore someone /ignore add re:[~@%]{0,3}nightbot should ignore\n"
+        "  of `/ignore add nightbot` and will require you to prefix nicks if you\n"
+        "  want to ignore someone `/ignore add re:[~@%]{0,3}nightbot` should ignore\n"
         "  a nick with all or none of the prefixes used by this script.\n"
         "  NOTE: This may cause high cpu usage in very active chat and/or on slower cpus.\n"
         "  This can also be disabled by setting\n    /set plugins.var.python.twitch.prefix_nicks off\n"
+        "\n\n"
+        "  If you are experiencing errors you can enable debug mode by setting\n"
+        "    /set plugins.var.python.twitch.debug on\n"
         "\n\n"
         "  Required server settings:\n"
         "    /server add twitch irc.twitch.tv\n"
