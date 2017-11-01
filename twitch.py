@@ -303,7 +303,7 @@ def twitch_clearchat(data, modifier, modifier_data, string):
         rul = weechat.color("-underline")
         if user:
             if 'ban-duration' in tags:
-                if tags['ban-reason']:
+                if 'ban-reason' in tags and tags['ban-reason']:
                     bn=tags['ban-reason'].replace('\s',' ')
                     weechat.prnt(buffer,"%s--%s %s has been timed out for %s seconds %sReason%s: %s" %
                         (pcolor, ccolor, user, tags['ban-duration'], ul, rul, bn))
