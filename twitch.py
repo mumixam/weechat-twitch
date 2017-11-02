@@ -30,6 +30,8 @@
 #
 # # History:
 #
+# 2017-11-02, mumixam
+#     v0.4: added debug mode for API calls, minor bugfixes 
 # 2017-06-10, mumixam
 #     v0.3: fixed whois output of utf8 display names
 # 2016-11-03, mumixam
@@ -41,7 +43,7 @@
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
-SCRIPT_VERSION = "0.3"
+SCRIPT_VERSION = "0.4"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "twitch.tv Chat Integration"
 OPTIONS={ 
