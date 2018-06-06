@@ -36,3 +36,7 @@ If you are experiencing errors you can enable debug mode by setting
 ```
 /set plugins.var.python.twitch.debug on
 ```
+And/or disable SSL/TLS verification by setting
+```
+/set plugins.var.python.twitch.ssl_verify off
+```
