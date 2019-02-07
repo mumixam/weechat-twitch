@@ -340,6 +340,26 @@ def twitch_clearchat(data, modifier, modifier_data, string):
     return ""
 
 
+def twitch_clearmsg(data, modifier, modifier_data, string):
+    mp = weechat.info_get_hashtable(
+    'irc_message_parse', {"message": string})
+    server = modifier_data
+    channel = mp['channel']
+    try:
+        tags = dict([s.split('=') for s in mp['tags'].split(';')])
+    except:
+        tags = ''
+    buffer = weechat.buffer_search("irc", "%s.%s" % (server, channel))
+    if buffer:
+        pcolor = weechat.color('chat_prefix_network')
+        ccolor = weechat.color('chat')
+        if 'login' in tags:
+            weechat.prnt(buffer,"%s--%s a message from %s was deleted" % (pcolor, ccolor, tags['login']))
+        else:
+            weechat.prnt(buffer, "%s--%s a message was deleted" % (pcolor, ccolor))
+    return ""
+
+
 def twitch_suppress(data, modifier, modifier_data, string):
     return ""
 
@@ -559,6 +579,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_config('plugins.var.python.' + SCRIPT_NAME + '.*', 'config_change', '')
     config_setup()
     weechat.hook_modifier("irc_in_CLEARCHAT", "twitch_clearchat", "")
+    weechat.hook_modifier("irc_in_CLEARMSG", "twitch_clearmsg", "")
     weechat.hook_modifier("irc_in_RECONNECT", "twitch_reconnect", "")
     weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
     weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_suppress", "")
