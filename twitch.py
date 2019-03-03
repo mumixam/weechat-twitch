@@ -146,7 +146,7 @@ def channel_api(data, command, rc, stdout, stderr):
     rul = weechat.color("-underline")
     pformat = weechat.config_string(
         weechat.config_get("weechat.look.prefix_network"))
-    if len(jsonDict) == 22:
+    if len(jsonDict) == 23:
         dname = jsonDict['display_name']
         create = jsonDict['created_at'].split('T')[0]
         status = jsonDict['status']
