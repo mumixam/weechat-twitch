@@ -32,7 +32,7 @@
 # # History:
 #
 #
-# 2019-09-21, mumixam
+# 2019-09-25, mumixam
 #     v0.7: updated script to use current api
 #
 # 2019-03-03,
@@ -82,9 +82,8 @@ curlopt = {
 }
 
 
-gameidcache = {
-}
-
+gameid_cache = {}
+uid_cache = {}
 
 def days_hours_minutes(td):
     age = ''
@@ -170,8 +169,8 @@ def stream_api(data, command, rc, stdout, stderr):
             if jsonDict['data']['game_id']:
                 game = jsonDict['data']['game_id']
                 game_id = game
-                if game in gameidcache:
-                    game = gameidcache[game]
+                if game in gameid_cache:
+                    game = gameid_cache[game]
                 output += ' <%s> with' % game
         if 'viewer_count' in jsonDict['data']:
             viewers = jsonDict['data']['viewer_count']
@@ -205,7 +204,7 @@ def stream_api(data, command, rc, stdout, stderr):
         if emote:
             output += " %s[EMOTE]" % title_fg
         weechat.buffer_set(data, "title", output)
-        if not game_id in gameidcache:
+        if not game_id in gameid_cache:
             url = 'https://api.twitch.tv/helix/games?id=' + game_id
             weechat.hook_process_hashtable(
                 "url:" + url, curlopt, 7 * 1000, "game_api", data)
@@ -236,7 +235,7 @@ def game_api(data, command, rc, stdout, stderr):
         name = makeutf8(jsonDict['data']['name'])
         new_title = old_title.replace('<{}>'.format(id),'<{}>'.format(name))
         weechat.buffer_set(data, "title", new_title)
-        gameidcache[id] = name
+        gameid_cache[id] = name
     return weechat.WEECHAT_RC_OK
 
 
@@ -261,11 +260,36 @@ def channel_api(data, command, rc, stdout, stderr):
     rul = weechat.color("-underline")
     pformat = weechat.config_string(
         weechat.config_get("weechat.look.prefix_network"))
-    if ('users' in jsonDict) and jsonDict['users']:
+    
+    if 'total' in jsonDict:
+        uid = command.split('=')[-1]
+        name = 'WHOIS'
+        if 'to_id' in command:
+            followers = jsonDict['total']
+            if uid in uid_cache:
+                name = uid_cache[uid]
+            output = '%s%s %s[%s%s%s]%s %sFollowers%s: %s' % (
+                pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, followers)
+            weechat.prnt(data, makeutf8(output))
+            url = 'https://api.twitch.tv/helix/users/follows?from_id=' + uid
+            url_hook = weechat.hook_process_hashtable(
+                "url:" + url, curlopt, 7 * 1000, "channel_api", data)
+            return weechat.WEECHAT_RC_OK
+        if 'from_id' in command:
+            following = jsonDict['total']
+            if uid in uid_cache:
+                name = uid_cache[uid]
+            output = '%s%s %s[%s%s%s]%s %sFollowing%s: %s' % (
+                pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, following)
+            weechat.prnt(data, makeutf8(output))
+            return weechat.WEECHAT_RC_OK
+    if ('users' in jsonDict) and jsonDict['users'] and len(jsonDict['users'][0]) == 8:
         dname = jsonDict['users'][0]['display_name']
         name = jsonDict['users'][0]['name']
         create = jsonDict['users'][0]['created_at'].split('T')[0]
         status = jsonDict['users'][0]['bio']
+        uid = jsonDict['users'][0]['_id']
+        uid_cache[uid] = name
         output = '%s%s %s[%s%s%s]%s %sDisplay Name%s: %s' % (
                             pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, dname)
         output += '\n%s%s %s[%s%s%s]%s %sAccount Created%s: %s' % (
@@ -274,6 +298,10 @@ def channel_api(data, command, rc, stdout, stderr):
             output += '\n%s%s %s[%s%s%s]%s %sBio%s: %s' % (
                 pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, status)
         weechat.prnt(data, makeutf8(output))
+        url = 'https://api.twitch.tv/helix/users/follows?to_id=' + uid
+        url_hook = weechat.hook_process_hashtable(
+            "url:" + url, curlopt, 7 * 1000, "channel_api", data)
+
     else:
         weechat.prnt(data, 'Error: No Such User')
 
