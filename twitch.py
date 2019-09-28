@@ -32,9 +32,8 @@
 # # History:
 #
 #
-# 2019-09-25, mumixam
+# 2019-09-21, mumixam
 #     v0.7: updated script to use current api
-#
 # 2019-03-03,
 #     v0.6: added support for CLEARMSG -MentalFS
 #           fixed issue with /whois -mumixam
@@ -61,7 +60,8 @@ OPTIONS={
     'servers': ('twitch','Name of server(s) which script will be active on, space seperated'),
     'prefix_nicks': ('1','Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]'),
     'debug': ('0','Debug mode'),
-    'ssl_verify': ('1', 'Verify SSL/TLS certs')
+    'ssl_verify': ('1', 'Verify SSL/TLS certs'),
+    'notice_notify_block': ('1', 'Changes notify level of NOTICEs to low')
 }
 
 
@@ -498,6 +498,12 @@ def twitch_whois(data, modifier, server_name, string):
         "url:" + url+params, curlopt, 7 * 1000, "channel_api", currentbuf)
     return ""
 
+
+def twitch_notice(data, line):
+    if not OPTIONS['notice_notify_block']: return string
+    return {"notify_level": "0"}
+
+
 def config_setup():
     for option,value in OPTIONS.items():
         weechat.config_set_desc_plugin(option, '%s' % value[1])
@@ -525,7 +531,7 @@ def config_setup():
 
 def config_change(pointer, name, value):
     option = name.replace('plugins.var.python.'+SCRIPT_NAME+'.','')
-    if option == 'prefix_nicks' or option == 'debug' or option == 'ssl_verify':
+    if option == 'prefix_nicks' or option == 'debug' or option == 'ssl_verify' or option == 'notice_notify_block':
         value=weechat.config_string_to_boolean(value)
         if option == 'debug':
             if value == 0:
@@ -589,6 +595,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_signal('buffer_switch', 'twitch_buffer_switch', '')
     weechat.hook_config('plugins.var.python.' + SCRIPT_NAME + '.*', 'config_change', '')
     config_setup()
+    weechat.hook_line("", "", "irc_notice+nick_tmi.twitch.tv", "twitch_notice", "")
     weechat.hook_modifier("irc_in_CLEARCHAT", "twitch_clearchat", "")
     weechat.hook_modifier("irc_in_CLEARMSG", "twitch_clearmsg", "")
     weechat.hook_modifier("irc_in_RECONNECT", "twitch_reconnect", "")
