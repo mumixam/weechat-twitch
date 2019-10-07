@@ -28,6 +28,7 @@
 # plugins.var.python.twitch.prefix_nicks (default: 1)
 # plugins.var.python.twitch.debug (default: 0)
 # plugins.var.python.twitch.ssl_verify (default: 1)
+# plugins.var.python.twitch.client_id (default: awtv6n371jb7uayyc4jaljochyjbfxs)
 #
 # # History:
 #
@@ -61,7 +62,8 @@ OPTIONS={
     'prefix_nicks': ('1','Prefix nicks based on ircv3 tags for mods/subs, This can be cpu intensive on very active chats [1 for enabled, 0 for disabled]'),
     'debug': ('0','Debug mode'),
     'ssl_verify': ('1', 'Verify SSL/TLS certs'),
-    'notice_notify_block': ('1', 'Changes notify level of NOTICEs to low')
+    'notice_notify_block': ('1', 'Changes notify level of NOTICEs to low'),
+    'client_id': ('awtv6n371jb7uayyc4jaljochyjbfxs', 'Twitch API Token')
 }
 
 
@@ -74,7 +76,7 @@ import string
 import ast
 
 curlopt = {
-    "httpheader": "Client-ID: awtv6n371jb7uayyc4jaljochyjbfxs",
+    "httpheader": "Client-ID: "+OPTIONS['client_id'][0],
     "timeout": "5",
     "verbose": "0",
     "ssl_verifypeer": "1",
@@ -511,40 +513,45 @@ def config_setup():
             weechat.config_set_plugin(option, value[0])
             OPTIONS[option] = value[0]
         else:
-            if option == 'prefix_nicks' or option == 'debug' or option == 'ssl_verify':
+            if option == 'prefix_nicks' or option == 'debug' or option == 'ssl_verify' or option == 'notice_notify_block':
                 OPTIONS[option] = weechat.config_string_to_boolean(
                     weechat.config_get_plugin(option))
-                if option == 'debug':
-                    if value == 0:
-                        curlopt['verbose'] = "0"
-                    else:
-                        curlopt['verbose'] = "1"
-                if option == 'ssl_verify':
-                    if value == 0:
-                        curlopt['ssl_verifypeer'] = "0"
-                        curlopt['ssl_verifyhost'] = "0"
-                    else:
-                        curlopt['ssl_verifypeer'] = "1"
-                        curlopt['ssl_verifyhost'] = "2"
             else:
                 OPTIONS[option] = weechat.config_get_plugin(option)
+            if option == 'debug':
+                if value == 0:
+                    curlopt['verbose'] = "0"
+                else:
+                    curlopt['verbose'] = "1"
+            if option == 'ssl_verify':
+                if value == 0:
+                    curlopt['ssl_verifypeer'] = "0"
+                    curlopt['ssl_verifyhost'] = "0"
+                else:
+                    curlopt['ssl_verifypeer'] = "1"
+                    curlopt['ssl_verifyhost'] = "2"
+            if option == 'client_id':
+                curlopt['httpheader'] = "Client-ID: " + value
+
 
 def config_change(pointer, name, value):
     option = name.replace('plugins.var.python.'+SCRIPT_NAME+'.','')
     if option == 'prefix_nicks' or option == 'debug' or option == 'ssl_verify' or option == 'notice_notify_block':
         value=weechat.config_string_to_boolean(value)
-        if option == 'debug':
-            if value == 0:
-                curlopt['verbose'] = "0"
-            if value == 1:
-                curlopt['verbose'] = "1"
-        if option == 'ssl_verify':
-            if value == 0:
-                curlopt['ssl_verifypeer'] = "0"
-                curlopt['ssl_verifyhost'] = "0"
-            if value == 1:
-                curlopt['ssl_verifypeer'] = "1"
-                curlopt['ssl_verifyhost'] = "2"
+    if option == 'debug':
+        if value == 0:
+            curlopt['verbose'] = "0"
+        if value == 1:
+            curlopt['verbose'] = "1"
+    if option == 'ssl_verify':
+        if value == 0:
+            curlopt['ssl_verifypeer'] = "0"
+            curlopt['ssl_verifyhost'] = "0"
+        if value == 1:
+            curlopt['ssl_verifypeer'] = "1"
+            curlopt['ssl_verifyhost'] = "2"
+    if option == 'client_id':
+        curlopt['httpheader'] = "Client-ID: " + value
     OPTIONS[option] = value
     return weechat.WEECHAT_RC_OK
 
