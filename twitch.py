@@ -262,7 +262,7 @@ def channel_api(data, command, rc, stdout, stderr):
     rul = weechat.color("-underline")
     pformat = weechat.config_string(
         weechat.config_get("weechat.look.prefix_network"))
-    
+
     if 'total' in jsonDict:
         uid = command.split('=')[-1]
         name = 'WHOIS'
@@ -531,7 +531,7 @@ def config_setup():
                     curlopt['ssl_verifypeer'] = "1"
                     curlopt['ssl_verifyhost'] = "2"
             if option == 'client_id':
-                curlopt['httpheader'] = "Client-ID: " + value
+                curlopt['httpheader'] = "Client-ID: " + value[0]
 
 
 def config_change(pointer, name, value):
@@ -564,6 +564,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         "    plugins.var.python.twitch.prefix_nicks (default: 1)\n"
         "    plugins.var.python.twitch.debug (default: 0)\n"
         "    plugins.var.python.twitch.ssl_verify (default: 0)\n"
+        "    plugins.var.python.twitch.client_id (default: awtv6n371jb7uayyc4jaljochyjbfxs)\n"
         "\n\n"
         "  This script checks stream status of any channel on any servers listed\n"
         "  in the \"plugins.var.python.twitch.servers\" setting. When you switch\n"
@@ -597,20 +598,23 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         "  If you do not have a oauth token one can be generated for your account here\n"
         "    https://twitchapps.com/tmi/\n"
         "\n"
+        "  If would like to use your own Client-ID it can be set with\n"
+        "    /set plugins.var.python.twitch.client_id (clientid)\n"
+        "\n"
         "  This script also has whisper support that works like a standard query. \"/query user\"\n\n",
         "", "twitch_main", "")
     weechat.hook_signal('buffer_switch', 'twitch_buffer_switch', '')
     weechat.hook_config('plugins.var.python.' + SCRIPT_NAME + '.*', 'config_change', '')
     config_setup()
     weechat.hook_line("", "", "irc_notice+nick_tmi.twitch.tv", "twitch_notice", "")
-    weechat.hook_modifier("irc_in_CLEARCHAT", "twitch_clearchat", "")
-    weechat.hook_modifier("irc_in_CLEARMSG", "twitch_clearmsg", "")
-    weechat.hook_modifier("irc_in_RECONNECT", "twitch_reconnect", "")
-    weechat.hook_modifier("irc_in_USERSTATE", "twitch_suppress", "")
-    weechat.hook_modifier("irc_in_HOSTTARGET", "twitch_suppress", "")
-    weechat.hook_modifier("irc_in_ROOMSTATE", "twitch_roomstate", "")
-    weechat.hook_modifier("irc_in_USERNOTICE", "twitch_usernotice", "")
-    weechat.hook_modifier("irc_in_WHISPER", "twitch_whisper", "")
+    weechat.hook_modifier("irc_in2_CLEARCHAT", "twitch_clearchat", "")
+    weechat.hook_modifier("irc_in2_CLEARMSG", "twitch_clearmsg", "")
+    weechat.hook_modifier("irc_in2_RECONNECT", "twitch_reconnect", "")
+    weechat.hook_modifier("irc_in2_USERSTATE", "twitch_suppress", "")
+    weechat.hook_modifier("irc_in2_HOSTTARGET", "twitch_suppress", "")
+    weechat.hook_modifier("irc_in2_ROOMSTATE", "twitch_roomstate", "")
+    weechat.hook_modifier("irc_in2_USERNOTICE", "twitch_usernotice", "")
+    weechat.hook_modifier("irc_in2_WHISPER", "twitch_whisper", "")
     weechat.hook_modifier("irc_out_PRIVMSG", "twitch_privmsg", "")
     weechat.hook_modifier("irc_out_WHOIS", "twitch_whois", "")
-    weechat.hook_modifier("irc_in_PRIVMSG", "twitch_in_privmsg", "")
+    weechat.hook_modifier("irc_in2_PRIVMSG", "twitch_in_privmsg", "")
