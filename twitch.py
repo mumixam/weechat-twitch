@@ -483,6 +483,8 @@ def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
 
     if not mp['tags']:
         return string
+    if not '#' in mp['channel']:
+        return string
     if '#' + mp['nick'] == mp['channel']:
         return mp['message_without_tags'].replace(mp['nick'], '~' + mp['nick'], 1)
 
@@ -661,7 +663,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_modifier("irc_in2_HOSTTARGET", "twitch_suppress", "")
     weechat.hook_modifier("irc_in2_ROOMSTATE", "twitch_roomstate", "")
     weechat.hook_modifier("irc_in2_USERNOTICE", "twitch_usernotice", "")
-    weechat.hook_modifier("irc_in2_WHISPER", "twitch_whisper", "")
+    weechat.hook_modifier("irc_in_WHISPER", "twitch_whisper", "")
     weechat.hook_modifier("irc_out_PRIVMSG", "twitch_privmsg", "")
     weechat.hook_modifier("irc_out_WHOIS", "twitch_whois", "")
     weechat.hook_modifier("irc_in2_PRIVMSG", "twitch_in_privmsg", "")
