@@ -40,3 +40,8 @@ And/or disable SSL/TLS verification by setting
 ```
 /set plugins.var.python.twitch.ssl_verify off
 ```
+
+A Oauth token with matching ClientID is now required for all Twitch Helix API Calls.
+You can use the generator below if you wish.
+https://mumixam.github.io/weechat_twitch/
+
