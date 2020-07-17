@@ -185,6 +185,8 @@ def stream_api(data, command, rc, stdout, stderr):
                 if game in gameid_cache:
                     game = gameid_cache[game]
                 output += ' <%s> with' % game
+            else:
+                game_id = None
         else:
             game_id = None
         if 'viewer_count' in jsonDict['data']:
