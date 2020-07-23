@@ -185,6 +185,10 @@ def stream_api(data, command, rc, stdout, stderr):
                 if game in gameid_cache:
                     game = gameid_cache[game]
                 output += ' <%s> with' % game
+            else:
+                game_id = None
+        else:
+            game_id = None
         if 'viewer_count' in jsonDict['data']:
             viewers = jsonDict['data']['viewer_count']
             output += ' %s viewers started' % viewers
@@ -217,7 +221,7 @@ def stream_api(data, command, rc, stdout, stderr):
         if emote:
             output += " %s[EMOTE]" % title_fg
         weechat.buffer_set(data, "title", output)
-        if not game_id in gameid_cache:
+        if game_id is not None and not game_id in gameid_cache:
             url = 'https://api.twitch.tv/helix/games?id=' + game_id
             weechat.hook_process_hashtable(
                 "url:" + url, curlopt, 7 * 1000, "game_api", data)
