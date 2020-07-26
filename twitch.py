@@ -34,6 +34,10 @@
 #
 # # History:
 #
+# 2020-07-27,
+#     v0.9: added support for Oauth token to support twitch APIs requirement -mumixam
+#           fix bug for when api returns null for game_id -mas90
+#
 # 2019-10-13, mumixam
 #     v0.8: changed input modifier hooks to use irc_in2_* instead
 #           added setting 'plugins.var.python.twitch.notice_notify_block'
@@ -60,7 +64,7 @@
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
-SCRIPT_VERSION = "0.8"
+SCRIPT_VERSION = "0.9"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "twitch.tv Chat Integration"
 OPTIONS={
