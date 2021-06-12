@@ -336,7 +336,7 @@ def twitch_clearchat(data, modifier, modifier_data, string):
     user = mp['text']
     channel = mp['channel']
     try:
-        tags = dict([s.split('=') for s in mp['tags'].split(';')])
+        tags = dict([s.split('=',1) for s in mp['tags'].split(';')])
     except:
         tags = ''
     buffer = weechat.buffer_search("irc", "%s.%s" % (server, channel))
@@ -377,7 +377,7 @@ def twitch_clearmsg(data, modifier, modifier_data, string):
     server = modifier_data
     channel = mp['channel']
     try:
-        tags = dict([s.split('=') for s in mp['tags'].split(';')])
+        tags = dict([s.split('=',1) for s in mp['tags'].split(';')])
     except:
         tags = ''
     buffer = weechat.buffer_search("irc", "%s.%s" % (server, channel))
@@ -452,7 +452,7 @@ def twitch_usernotice(data, modifier, server, string):
     buffer = weechat.buffer_search(
         "irc", "%s.%s" % (server, mp['channel']))
     if mp['tags']:
-        tags = dict([s.split('=') for s in mp['tags'].split(';')])
+        tags = dict([s.split('=',1) for s in mp['tags'].split(';')])
         msg = tags['system-msg'].replace('\s',' ')
         if mp['text']:
             msg += ' [Comment] '+mp['text']
@@ -496,7 +496,7 @@ def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
     if '#' + mp['nick'] == mp['channel']:
         return mp['message_without_tags'].replace(mp['nick'], '~' + mp['nick'], 1)
 
-    tags = dict([s.split('=') for s in mp['tags'].split(';')])
+    tags = dict([s.split('=',1) for s in mp['tags'].split(';')])
     if tags['user-type'] == 'mod':
         prefix += '@'
     if tags['subscriber'] == '1':
