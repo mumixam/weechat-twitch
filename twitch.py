@@ -349,25 +349,25 @@ def twitch_clearchat(data, modifier, modifier_data, string):
             if 'ban-duration' in tags:
                 if 'ban-reason' in tags and tags['ban-reason']:
                     bn=tags['ban-reason'].replace('\s',' ')
-                    weechat.prnt(buffer,"%s--%s %s has been timed out for %s seconds %sReason%s: %s" %
+                    weechat.prnt_date_tags(buffer, 0, "irc_notice,log3", "%s--%s %s has been timed out for %s seconds %sReason%s: %s" %
                         (pcolor, ccolor, user, tags['ban-duration'], ul, rul, bn))
                 else:
-                    weechat.prnt(buffer,"%s--%s %s has been timed out for %s seconds" %
+                    weechat.prnt_date_tags(buffer, 0, "irc_notice,log3", "%s--%s %s has been timed out for %s seconds" %
                         (pcolor, ccolor, user, tags['ban-duration']))
             elif 'ban-reason' in tags:
                 if tags['ban-reason']:
                     bn=tags['ban-reason'].replace('\s',' ')
-                    weechat.prnt(buffer,"%s--%s %s has been banned %sReason%s: %s" %
+                    weechat.prnt_date_tags(buffer, 0, "irc_notice,log3", "%s--%s %s has been banned %sReason%s: %s" %
                         (pcolor, ccolor, user, ul, rul,bn))
                 else:
-                    weechat.prnt(buffer,"%s--%s %s has been banned" %
+                    weechat.prnt_date_tags(buffer, 0, "irc_notice,log3", "%s--%s %s has been banned" %
                         (pcolor, ccolor, user))
             else:
-                weechat.prnt(
-                    buffer, "%s--%s %s's Chat Cleared By Moderator" % (pcolor, ccolor, user))
+                weechat.prnt_date_tags(
+                    buffer, 0, "irc_notice,log3", "%s--%s %s's Chat Cleared By Moderator" % (pcolor, ccolor, user))
         else:
-            weechat.prnt(
-                buffer, "%s--%s Entire Chat Cleared By Moderator" % (pcolor, ccolor))
+            weechat.prnt_date_tags(
+                buffer, 0, "irc_notice,log3", "%s--%s Entire Chat Cleared By Moderator" % (pcolor, ccolor))
     return ""
 
 
@@ -385,9 +385,9 @@ def twitch_clearmsg(data, modifier, modifier_data, string):
         pcolor = weechat.color('chat_prefix_network')
         ccolor = weechat.color('chat')
         if 'login' in tags:
-            weechat.prnt(buffer,"%s--%s a message from %s was deleted" % (pcolor, ccolor, tags['login']))
+            weechat.prnt_date_tags(buffer, 0, "irc_notice,log3", "%s--%s a message from %s was deleted" % (pcolor, ccolor, tags['login']))
         else:
-            weechat.prnt(buffer, "%s--%s a message was deleted" % (pcolor, ccolor))
+            weechat.prnt_date_tags(buffer, 0, "irc_notice,log3", "%s--%s a message was deleted" % (pcolor, ccolor))
     return ""
 
 
@@ -456,7 +456,7 @@ def twitch_usernotice(data, modifier, server, string):
         msg = tags['system-msg'].replace('\s',' ')
         if mp['text']:
             msg += ' [Comment] '+mp['text']
-        weechat.prnt(buffer, '%s--%s %s' % (pcolor, ccolor, msg))
+        weechat.prnt_date_tags(buffer, 0, 'irc_notice,log3', '%s--%s %s' % (pcolor, ccolor, msg))
     return ''
 
 
@@ -496,7 +496,10 @@ def twitch_in_privmsg(data, modifier, server_name, string, prefix=''):
     if '#' + mp['nick'] == mp['channel']:
         return mp['message_without_tags'].replace(mp['nick'], '~' + mp['nick'], 1)
 
-    tags = dict([s.split('=',1) for s in mp['tags'].split(';')])
+    try:
+        tags = dict([s.split('=',1) for s in mp['tags'].split(';')])
+    except:
+        weechat.command(weechat.buffer_search_main(), "/print -newbuffer TWITCH.ERR TAGS ERR [ %s ]" % (str(mp['tags'])))
     if tags['user-type'] == 'mod':
         prefix += '@'
     if tags['subscriber'] == '1':
