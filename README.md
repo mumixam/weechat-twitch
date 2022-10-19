@@ -13,7 +13,7 @@ This may cause high cpu usage in very active chat and/or on slower cpus.
 This can also be disabled by setting `/set plugins.var.python.twitch.prefix_nicks off`   
 
 ```
-/server add twitch irc.twitch.tv
+/server add twitch irc.chat.twitch.tv
 /set irc.server.twitch.capabilities "twitch.tv/membership,twitch.tv/commands,twitch.tv/tags"
 /set irc.server.twitch.nicks "My Twitch Username"
 /set irc.server.twitch.password "oauth:My Oauth Key"

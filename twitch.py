@@ -642,7 +642,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
         "    /set plugins.var.python.twitch.ssl_verify off\n"
         "\n\n"
         "  Required server settings:\n"
-        "    /server add twitch irc.twitch.tv\n"
+        "    /server add twitch irc.chat.twitch.tv\n"
         "    /set irc.server.twitch.capabilities \"twitch.tv/membership,twitch.tv/commands,twitch.tv/tags\"\n"
         "    /set irc.server.twitch.nicks \"My Twitch Username\"\n"
         "    /set irc.server.twitch.password \"oauth:My Oauth Key\"\n"
