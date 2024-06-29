@@ -34,6 +34,9 @@
 #
 # # History:
 #
+# 2024-06-29,
+#     v1.0: eval client_id and token expressions so that /secure can be used
+#
 # 2020-07-27,
 #     v0.9: added support for Oauth token to support twitch APIs requirement -mumixam
 #           fix bug for when api returns null for game_id -mas90
@@ -64,7 +67,7 @@
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
-SCRIPT_VERSION = "0.9"
+SCRIPT_VERSION = "1.0"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "twitch.tv Chat Integration"
 OPTIONS={
