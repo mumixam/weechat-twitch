@@ -87,6 +87,7 @@ from datetime import datetime, timedelta
 import time
 import string
 import ast
+import re
 
 curlopt = {
     "httpheader": "\n".join([
@@ -351,7 +352,7 @@ def twitch_clearchat(data, modifier, modifier_data, string):
         if user:
             if 'ban-duration' in tags:
                 if 'ban-reason' in tags and tags['ban-reason']:
-                    bn=tags['ban-reason'].replace('\s',' ')
+                    bn=re.sub(r'\s',' ', tags['ban-reason'])
                     weechat.prnt(buffer,"%s--%s %s has been timed out for %s seconds %sReason%s: %s" %
                         (pcolor, ccolor, user, tags['ban-duration'], ul, rul, bn))
                 else:
@@ -359,7 +360,7 @@ def twitch_clearchat(data, modifier, modifier_data, string):
                         (pcolor, ccolor, user, tags['ban-duration']))
             elif 'ban-reason' in tags:
                 if tags['ban-reason']:
-                    bn=tags['ban-reason'].replace('\s',' ')
+                    bn=re.sub(r'\s', ' ', tags['ban-reason'])
                     weechat.prnt(buffer,"%s--%s %s has been banned %sReason%s: %s" %
                         (pcolor, ccolor, user, ul, rul,bn))
                 else:
@@ -456,7 +457,7 @@ def twitch_usernotice(data, modifier, server, string):
         "irc", "%s.%s" % (server, mp['channel']))
     if mp['tags']:
         tags = dict([s.split('=',1) for s in mp['tags'].split(';')])
-        msg = tags['system-msg'].replace('\s',' ')
+        msg = re.sub(r'\\s', ' ', tags['system-msg'])
         if mp['text']:
             msg += ' [Comment] '+mp['text']
         weechat.prnt(buffer, '%s--%s %s' % (pcolor, ccolor, msg))
