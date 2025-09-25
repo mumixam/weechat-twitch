@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
-
+# SPDX-FileCopyrightText: 2014-2025 mumixam <mumixam@gmail.com>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -33,8 +34,12 @@
 # plugins.var.python.twitch.token (default: "")
 #
 # # History:
+# 2025-09-23, 
+#     v1.1: changed hook_modifier from "irc_in_WHISPER" to "irc_in2_WHISPER" -mumixam
+#           changed hook_process_hashtable("url:") to hook_url -mumixam
+#           use rawstrings to keep invalid escapes from throwing warnings -zer0def
 #
-# 2024-06-29,
+# 2024-06-29, mumixam + stacyharper
 #     v1.0: eval client_id and token expressions so that /secure can be used
 #
 # 2020-07-27,
@@ -67,7 +72,7 @@
 
 SCRIPT_NAME = "twitch"
 SCRIPT_AUTHOR = "mumixam"
-SCRIPT_VERSION = "1.0"
+SCRIPT_VERSION = "1.1"
 SCRIPT_LICENSE = "GPL3"
 SCRIPT_DESC = "twitch.tv Chat Integration"
 OPTIONS={
@@ -126,8 +131,7 @@ def twitch_main(data, buffer, args):
     if not (server in OPTIONS['servers'].split() and type == 'channel'):
         return weechat.WEECHAT_RC_OK
     url = 'https://api.twitch.tv/helix/streams?user_login=' + username
-    weechat.hook_process_hashtable(
-        "url:" + url, curlopt, 7 * 1000, "stream_api", buffer)
+    weechat.hook_url(url, curlopt, 7 * 1000, "stream_api", buffer)
     return weechat.WEECHAT_RC_OK
 
 
@@ -137,17 +141,15 @@ def makeutf8(data):
         data=str(data,'utf8')
     return data
 
-
-def stream_api(data, command, rc, stdout, stderr):
+def stream_api(data, url, options, output):
     try:
-        jsonDict = json.loads(stdout.strip())
+        jsonDict = json.loads(output['output'].strip())
     except Exception as e:
         weechat.prnt(data, '%stwitch.py: error communicating with twitch api' % weechat.prefix('error'))
         if OPTIONS['debug']:
-            weechat.prnt(data,'%stwitch.py: return code: %s' % (weechat.prefix('error'),rc))
-            weechat.prnt(data,'%stwitch.py: stdout: %s' % (weechat.prefix('error'),stdout))
-            weechat.prnt(data,'%stwitch.py: stderr: %s' % (weechat.prefix('error'),stderr))
-            weechat.prnt(data,'%stwitch.py: exception: %s' % (weechat.prefix('error'),e))
+            weechat.prnt(data,'%stwitch.py: response code: %s' % (weechat.prefix('error'),output['response_code']))
+            weechat.prnt(data,'%stwitch.py: headers: %s' % (weechat.prefix('error'),output['headers']))
+            weechat.prnt(data,'%stwitch.py: output: %s' % (weechat.prefix('error'),output['output']))
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
     title_fg = weechat.color(
@@ -167,7 +169,7 @@ def stream_api(data, command, rc, stdout, stderr):
     if not 'data' in jsonDict.keys():
         weechat.prnt(data, 'twitch.py: Error with twitch API (data key missing from json)')
         if OPTIONS['debug']:
-            weechat.prnt(data, 'twitch.py: %s' % stdout.strip())
+            weechat.prnt(data, 'twitch.py: %s' % output['output'].strip())
         return weechat.WEECHAT_RC_OK
     if not jsonDict['data']:
         line = "STREAM: %sOFFLINE%s %sCHECKED AT: (%s)" % (
@@ -231,23 +233,20 @@ def stream_api(data, command, rc, stdout, stderr):
         weechat.buffer_set(data, "title", output)
         if game_id is not None and not game_id in gameid_cache:
             url = 'https://api.twitch.tv/helix/games?id=' + game_id
-            weechat.hook_process_hashtable(
-                "url:" + url, curlopt, 7 * 1000, "game_api", data)
+            weechat.hook_url(url, curlopt, 7 * 1000, "game_api", data)
 
     return weechat.WEECHAT_RC_OK
 
 
-
-def game_api(data, command, rc, stdout, stderr):
+def game_api(data, url, options, output):
     try:
-        jsonDict = json.loads(stdout.strip())
+        jsonDict = json.loads(output['output'].strip())
     except Exception as e:
         weechat.prnt(data, '%stwitch.py: error communicating with twitch api' % weechat.prefix('error'))
         if OPTIONS['debug']:
-            weechat.prnt(data,'%stwitch.py: return code: %s' % (weechat.prefix('error'),rc))
-            weechat.prnt(data,'%stwitch.py: stdout: %s' % (weechat.prefix('error'),stdout))
-            weechat.prnt(data,'%stwitch.py: stderr: %s' % (weechat.prefix('error'),stderr))
-            weechat.prnt(data,'%stwitch.py: exception: %s' % (weechat.prefix('error'),e))
+            weechat.prnt(data,'%stwitch.py: response code: %s' % (weechat.prefix('error'),output['response_code']))
+            weechat.prnt(data,'%stwitch.py: headers: %s' % (weechat.prefix('error'),output['headers']))
+            weechat.prnt(data,'%stwitch.py: output: %s' % (weechat.prefix('error'),output['output']))
         return weechat.WEECHAT_RC_OK
 
     if 'data' in jsonDict.keys():
@@ -264,17 +263,15 @@ def game_api(data, command, rc, stdout, stderr):
     return weechat.WEECHAT_RC_OK
 
 
-
-def channel_api(data, command, rc, stdout, stderr):
+def channel_api(data, url, options, output):
     try:
-        jsonDict = json.loads(stdout.strip())
+        jsonDict = json.loads(output['output'].strip())
     except Exception as e:
         weechat.prnt(data, '%stwitch.py: error communicating with twitch api' % weechat.prefix('error'))
         if OPTIONS['debug']:
-            weechat.prnt(data['buffer'],'%stwitch.py: return code: %s' % (weechat.prefix('error'),rc))
-            weechat.prnt(data['buffer'],'%stwitch.py: stdout: %s' % (weechat.prefix('error'),stdout))
-            weechat.prnt(data['buffer'],'%stwitch.py: stderr: %s' % (weechat.prefix('error'),stderr))
-            weechat.prnt(data['buffer'],'%stwitch.py: exception: %s' % (weechat.prefix('error'),e))
+            weechat.prnt(data,'%stwitch.py: response code: %s' % (weechat.prefix('error'),output['response_code']))
+            weechat.prnt(data,'%stwitch.py: headers: %s' % (weechat.prefix('error'),output['headers']))
+            weechat.prnt(data,'%stwitch.py: output: %s' % (weechat.prefix('error'),output['output']))
         return weechat.WEECHAT_RC_OK
     currentbuf = weechat.current_buffer()
     pcolor = weechat.color('chat_prefix_network')
@@ -297,8 +294,7 @@ def channel_api(data, command, rc, stdout, stderr):
                 pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, followers)
             weechat.prnt(data, makeutf8(output))
             url = 'https://api.twitch.tv/helix/users/follows?from_id=' + uid
-            url_hook = weechat.hook_process_hashtable(
-                "url:" + url, curlopt, 7 * 1000, "channel_api", data)
+            url_hook = weechat.hook_url(url, curlopt, 7 * 1000, "channel_api", data)
             return weechat.WEECHAT_RC_OK
         if 'from_id' in command:
             following = jsonDict['total']
@@ -324,8 +320,7 @@ def channel_api(data, command, rc, stdout, stderr):
                 pcolor, pformat, dcolor, ncolor, name, dcolor, ccolor, ul, rul, status)
         weechat.prnt(data, makeutf8(output))
         url = 'https://api.twitch.tv/helix/users/follows?to_id=' + uid
-        url_hook = weechat.hook_process_hashtable(
-            "url:" + url, curlopt, 7 * 1000, "channel_api", data)
+        url_hook = weechat.hook_url(url, curlopt, 7 * 1000, "channel_api", data)
 
     else:
         weechat.prnt(data, 'Error: No Such User')
@@ -521,8 +516,7 @@ def twitch_whois(data, modifier, server_name, string):
     currentbuf = weechat.current_buffer()
     url = 'https://api.twitch.tv/kraken/users?login=' + username
     params='&api_version=5'
-    url_hook = weechat.hook_process_hashtable(
-        "url:" + url+params, curlopt, 7 * 1000, "channel_api", currentbuf)
+    url_hook = weechat.hook_url(url+params, curlopt, 7 * 1000, "channel_api", currentbuf)
     return ""
 
 
@@ -681,7 +675,7 @@ if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE,
     weechat.hook_modifier("irc_in2_HOSTTARGET", "twitch_suppress", "")
     weechat.hook_modifier("irc_in2_ROOMSTATE", "twitch_roomstate", "")
     weechat.hook_modifier("irc_in2_USERNOTICE", "twitch_usernotice", "")
-    weechat.hook_modifier("irc_in_WHISPER", "twitch_whisper", "")
+    weechat.hook_modifier("irc_in2_WHISPER", "twitch_whisper", "")
     weechat.hook_modifier("irc_out_PRIVMSG", "twitch_privmsg", "")
     weechat.hook_modifier("irc_out_WHOIS", "twitch_whois", "")
     weechat.hook_modifier("irc_in2_PRIVMSG", "twitch_in_privmsg", "")
