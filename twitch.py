@@ -552,6 +552,8 @@ def config_setup():
                 tokv = weechat.config_get_plugin('token')
                 if tokv[:6] == "${sec.":
                     tokv = weechat.string_eval_expression(tokv, {}, {}, {})
+                if tokv[:6] == "oauth:":
+                    tokv = tokv[6:]
                 if cidv:
                     hlist.append('Client-ID: '+cidv)
                 if tokv:
@@ -564,6 +566,8 @@ def config_setup():
                 tokv = weechat.config_get_plugin(option)
                 if tokv[:6] == "${sec.":
                     tokv = weechat.string_eval_expression(tokv, {}, {}, {})
+                if tokv[:6] == "oauth:":
+                    tokv = tokv[6:]
                 if tokv:
                     hlist.append('Authorization: Bearer '+tokv)
                 if cidv:
